@@ -13,6 +13,17 @@ export interface ApiResult<T = any> {
 const http = axios.create({
   baseURL: '/api/v1',
   timeout: 30000,
+  paramsSerializer: (params) => {
+    const usp = new URLSearchParams()
+    Object.entries(params || {}).forEach(([k, v]) => {
+      if (Array.isArray(v)) {
+        v.forEach((item) => usp.append(k, String(item)))
+      } else if (v !== null && v !== undefined) {
+        usp.append(k, String(v))
+      }
+    })
+    return usp.toString()
+  },
 })
 
 http.interceptors.request.use((config) => {

@@ -1,33 +1,47 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
+import { Search, Fold, Expand } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { hasPerm } from '@/utils/permission'
+import { categoryGroupOf } from '@/api/types'
 
 const user = useUserStore()
 const route = useRoute()
 const router = useRouter()
+const collapsed = ref(false)
+const keyword = ref('')
 
 interface MenuItem {
   index: string
   title: string
   icon: string
   permission?: string
-  children?: MenuItem[]
 }
 
-const menu: MenuItem[] = [
-  { index: '/dashboard', title: '首页', icon: 'Odometer' },
-  { index: '/meetings', title: '会议调试台账', icon: 'Calendar', permission: 'meeting:view' },
-  { index: '/network-assets', title: 'IP/MAC 台账', icon: 'Connection', permission: 'network_asset:view' },
-  { index: '/account-batches', title: '批量账号台账', icon: 'Files', permission: 'account_batch:view' },
-  { index: '/maintenance', title: '通用维护台账', icon: 'Tools', permission: 'maintenance:view' },
+const navGroups: { title: string; items: MenuItem[] }[] = [
   {
-    index: '/system',
+    title: '工作台',
+    items: [
+      { index: '/dashboard', title: '工作台首页', icon: 'Odometer' },
+    ],
+  },
+  {
+    title: '业务台账',
+    items: [
+      { index: '/meetings', title: '会议调试台账', icon: 'Calendar', permission: 'meeting:view' },
+      { index: '/network-assets', title: 'IP/MAC 台账', icon: 'Connection', permission: 'network_asset:view' },
+      { index: '/account-batches', title: '批量账号台账', icon: 'Files', permission: 'account_batch:view' },
+      { index: 'maintenance:账号类', title: '账号类维护', icon: 'User', permission: 'maintenance:view' },
+      { index: 'maintenance:终端类', title: '终端类维护', icon: 'Monitor', permission: 'maintenance:view' },
+      { index: 'maintenance:网络类', title: '网络类维护', icon: 'Connection', permission: 'maintenance:view' },
+      { index: 'maintenance:无线类', title: '无线类维护', icon: 'Position', permission: 'maintenance:view' },
+    ],
+  },
+  {
     title: '系统管理',
-    icon: 'Setting',
-    children: [
+    items: [
       { index: '/system/users', title: '用户管理', icon: 'User', permission: 'system:user_manage' },
       { index: '/system/departments', title: '部门管理', icon: 'OfficeBuilding', permission: 'system:department_manage' },
       { index: '/system/logs', title: '操作日志', icon: 'Document', permission: 'system:log_view' },
@@ -35,16 +49,20 @@ const menu: MenuItem[] = [
   },
 ]
 
-const visibleMenu = computed(() =>
-  menu
+function visibleOf(it: MenuItem): MenuItem | null {
+  if (it.permission && !hasPerm(it.permission)) return null
+  const kw = keyword.value.trim().toLowerCase()
+  if (kw && !it.title.toLowerCase().includes(kw)) return null
+  return it
+}
+
+const groups = computed(() =>
+  navGroups
     .map((g) => {
-      if (g.children) {
-        const kids = g.children.filter((c) => !c.permission || hasPerm(c.permission))
-        return kids.length ? { ...g, children: kids } : null
-      }
-      return g.permission && !hasPerm(g.permission) ? null : g
+      const items = g.items.map(visibleOf).filter((x): x is MenuItem => x !== null)
+      return items.length ? { ...g, items } : null
     })
-    .filter((x): x is MenuItem => x !== null),
+    .filter((x): x is { title: string; items: MenuItem[] } => x !== null),
 )
 
 const activeIndex = computed(() => {
@@ -52,12 +70,20 @@ const activeIndex = computed(() => {
   if (p.startsWith('/meetings')) return '/meetings'
   if (p.startsWith('/network-assets')) return '/network-assets'
   if (p.startsWith('/account-batches')) return '/account-batches'
-  if (p.startsWith('/maintenance')) return '/maintenance'
+  if (p.startsWith('/maintenance')) {
+    const g = (typeof route.query.group === 'string' && route.query.group) || categoryGroupOf(route.query.category as string)
+    return `maintenance:${g}`
+  }
   if (p.startsWith('/system')) return p
   return p
 })
 
 function handleSelect(index: string) {
+  if (index.startsWith('maintenance:')) {
+    const group = index.slice('maintenance:'.length)
+    router.push({ path: '/maintenance', query: { group } })
+    return
+  }
   if (index !== route.path) router.push(index)
 }
 
@@ -80,26 +106,26 @@ const roleLabel: Record<string, string> = {
 
 <template>
   <el-container class="app-layout">
-    <el-aside width="220px" class="app-aside">
+    <el-aside :width="collapsed ? '64px' : '220px'" class="app-aside">
       <div class="brand">
         <span class="brand-dot" />
-        <span class="brand-name">运维智能台账</span>
+        <span v-show="!collapsed" class="brand-name">运维智能台账</span>
       </div>
-      <el-menu :default-active="activeIndex" class="app-menu" @select="handleSelect">
-        <template v-for="g in visibleMenu" :key="g.index">
-          <el-sub-menu v-if="g.children" :index="g.index">
-            <template #title>
-              <el-icon><component :is="g.icon" /></el-icon>
-              <span>{{ g.title }}</span>
-            </template>
-            <el-menu-item v-for="c in g.children" :key="c.index" :index="c.index">
-              <el-icon><component :is="c.icon" /></el-icon>
-              <span>{{ c.title }}</span>
-            </el-menu-item>
-          </el-sub-menu>
-          <el-menu-item v-else :index="g.index">
-            <el-icon><component :is="g.icon" /></el-icon>
-            <span>{{ g.title }}</span>
+      <div v-show="!collapsed" class="menu-search">
+        <el-input v-model="keyword" placeholder="搜索菜单" :prefix-icon="Search" clearable size="small" />
+      </div>
+      <el-menu
+        :default-active="activeIndex"
+        :collapse="collapsed"
+        :collapse-transition="false"
+        class="app-menu"
+        @select="handleSelect"
+      >
+        <template v-for="g in groups" :key="g.title">
+          <div v-if="!collapsed" class="menu-group-title">{{ g.title }}</div>
+          <el-menu-item v-for="it in g.items" :key="it.index" :index="it.index">
+            <el-icon><component :is="it.icon" /></el-icon>
+            <template #title>{{ it.title }}</template>
           </el-menu-item>
         </template>
       </el-menu>
@@ -107,7 +133,10 @@ const roleLabel: Record<string, string> = {
 
     <el-container>
       <el-header class="app-header">
-        <div class="header-title">{{ (route.meta.title as string) || '' }}</div>
+        <div class="header-left">
+          <el-button text :icon="collapsed ? Expand : Fold" @click="collapsed = !collapsed" />
+          <span class="header-title">{{ (route.meta.title as string) || '' }}</span>
+        </div>
         <div class="header-right">
           <span class="user-meta">
             {{ user.realName || user.me?.username }}
@@ -132,6 +161,8 @@ const roleLabel: Record<string, string> = {
 .app-aside {
   background: #1f2d3d;
   color: #fff;
+  transition: width 0.2s;
+  overflow: hidden;
 }
 .brand {
   display: flex;
@@ -142,12 +173,24 @@ const roleLabel: Record<string, string> = {
   font-weight: 600;
   font-size: 16px;
   color: #fff;
+  white-space: nowrap;
 }
 .brand-dot {
+  flex: none;
   width: 10px;
   height: 10px;
   border-radius: 50%;
   background: #409eff;
+}
+.menu-search {
+  padding: 0 12px 8px;
+}
+.menu-group-title {
+  padding: 12px 18px 6px;
+  font-size: 12px;
+  color: #8a94a6;
+  letter-spacing: 1px;
+  white-space: nowrap;
 }
 .app-menu {
   border-right: none;
@@ -167,6 +210,11 @@ const roleLabel: Record<string, string> = {
   justify-content: space-between;
   background: #fff;
   border-bottom: 1px solid #ebeef5;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .header-title {
   font-size: 18px;

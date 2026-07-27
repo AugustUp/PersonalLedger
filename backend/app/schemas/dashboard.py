@@ -10,6 +10,7 @@ class DashboardSummary(BaseModel):
     account_batch_pending: int = 0
     maintenance_total: int = 0
     maintenance_pending: int = 0
+    maintenance_by_category: dict[str, dict[str, int]] = {}
     user_total: int = 0
     # recent maintenance / meetings for quick view
     recent_maintenance: list[dict] = []

@@ -4,30 +4,39 @@ import { useRouter } from 'vue-router'
 import { dashboardApi } from '@/api'
 import { fmtDateTime } from '@/utils/format'
 import type { DashboardSummary } from '@/api/types'
+import { MAINTENANCE_CATEGORY_GROUPS } from '@/api/types'
 
 const router = useRouter()
 const loading = ref(false)
 const data = ref<DashboardSummary | null>(null)
 
-const cards = ref([
+const moduleCards = ref([
   { key: 'meeting', title: '会议调试台账', icon: 'Calendar', color: '#409eff', total: 0, pending: 0, to: '/meetings' },
   { key: 'network', title: 'IP/MAC 台账', icon: 'Connection', color: '#67c23a', total: 0, pending: 0, to: '/network-assets' },
   { key: 'account', title: '批量账号台账', icon: 'Files', color: '#e6a23c', total: 0, pending: 0, to: '/account-batches' },
   { key: 'maintenance', title: '通用维护台账', icon: 'Tools', color: '#f56c6c', total: 0, pending: 0, to: '/maintenance' },
 ])
 
+const catGroups = MAINTENANCE_CATEGORY_GROUPS
+
+function catStat(c: string) {
+  const m = data.value?.maintenance_by_category || {}
+  return m[c] || { total: 0, pending: 0 }
+}
+
 async function load() {
   loading.value = true
   try {
     data.value = await dashboardApi.summary()
-    cards.value[0].total = data.value.meeting_total
-    cards.value[0].pending = data.value.meeting_pending
-    cards.value[1].total = data.value.network_asset_total
-    cards.value[1].pending = data.value.network_asset_active
-    cards.value[2].total = data.value.account_batch_total
-    cards.value[2].pending = data.value.account_batch_pending
-    cards.value[3].total = data.value.maintenance_total
-    cards.value[3].pending = data.value.maintenance_pending
+    const d = data.value
+    moduleCards.value[0].total = d.meeting_total
+    moduleCards.value[0].pending = d.meeting_pending
+    moduleCards.value[1].total = d.network_asset_total
+    moduleCards.value[1].pending = d.network_asset_active
+    moduleCards.value[2].total = d.account_batch_total
+    moduleCards.value[2].pending = d.account_batch_pending
+    moduleCards.value[3].total = d.maintenance_total
+    moduleCards.value[3].pending = d.maintenance_pending
   } finally {
     loading.value = false
   }
@@ -38,8 +47,9 @@ onMounted(load)
 
 <template>
   <div v-loading="loading">
+    <h3 class="section-title">业务台账总览</h3>
     <el-row :gutter="16">
-      <el-col v-for="c in cards" :key="c.key" :xs="12" :sm="12" :md="6">
+      <el-col v-for="c in moduleCards" :key="c.key" :xs="12" :sm="12" :md="6">
         <el-card shadow="hover" class="stat-card" @click="router.push(c.to)">
           <div class="stat-icon" :style="{ background: c.color }">
             <el-icon><component :is="c.icon" /></el-icon>
@@ -52,6 +62,30 @@ onMounted(load)
         </el-card>
       </el-col>
     </el-row>
+
+    <el-card shadow="never" class="domain-card">
+      <template #header>
+        <span class="card-header">维护任务领域（点击进入对应分类）</span>
+      </template>
+      <div v-for="g in catGroups" :key="g.label" class="cat-group">
+        <div class="cat-group-title">{{ g.label }}</div>
+        <div class="cat-grid">
+          <div
+            v-for="c in g.options"
+            :key="c"
+            class="cat-tile"
+            @click="router.push(`/maintenance?category=${encodeURIComponent(c)}`)"
+          >
+            <div class="cat-name">{{ c }}</div>
+            <div class="cat-stat">
+              <span class="cat-pending">{{ catStat(c).pending }}</span>
+              <span class="cat-total"> / {{ catStat(c).total }}</span>
+            </div>
+            <div class="cat-foot">待办 / 总数</div>
+          </div>
+        </div>
+      </div>
+    </el-card>
 
     <el-row :gutter="16" style="margin-top: 16px">
       <el-col :md="12">
@@ -83,6 +117,11 @@ onMounted(load)
 </template>
 
 <style scoped>
+.section-title {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: #303133;
+}
 .stat-card {
   cursor: pointer;
   margin-bottom: 4px;
@@ -114,5 +153,57 @@ onMounted(load)
 .stat-sub {
   color: #909399;
   font-size: 12px;
+}
+.domain-card {
+  margin-top: 16px;
+}
+.card-header {
+  font-weight: 600;
+  color: #303133;
+}
+.cat-group {
+  margin-bottom: 14px;
+}
+.cat-group-title {
+  font-size: 13px;
+  color: #909399;
+  margin-bottom: 8px;
+}
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+.cat-tile {
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  background: #fafafa;
+  transition: all 0.15s;
+}
+.cat-tile:hover {
+  border-color: #409eff;
+  background: #ecf5ff;
+  transform: translateY(-2px);
+}
+.cat-name {
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 6px;
+}
+.cat-stat {
+  font-size: 18px;
+  font-weight: 700;
+}
+.cat-pending {
+  color: #f56c6c;
+}
+.cat-total {
+  color: #606266;
+}
+.cat-foot {
+  font-size: 12px;
+  color: #909399;
 }
 </style>

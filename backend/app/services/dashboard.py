@@ -1,5 +1,5 @@
 """Dashboard summary service (manual 8.5.5, 10.4)."""
-from sqlalchemy import func
+from sqlalchemy import func, case
 from sqlalchemy.orm import Session
 
 from app.models.account_batch import AccountBatch
@@ -26,6 +26,13 @@ def get_summary(db: Session) -> DashboardSummary:
         MaintenanceRecord.is_deleted.is_(False)).scalar() or 0
     maint_pending = db.query(func.count(MaintenanceRecord.id)).filter(
         MaintenanceRecord.is_deleted.is_(False), MaintenanceRecord.status.in_(["pending", "processing"])).scalar() or 0
+    maint_by_cat: dict[str, dict[str, int]] = {}
+    for cat, total, pending in db.query(
+        MaintenanceRecord.category,
+        func.count(MaintenanceRecord.id),
+        func.coalesce(func.sum(case((MaintenanceRecord.status.in_(["pending", "processing"]), 1), else_=0)), 0),
+    ).filter(MaintenanceRecord.is_deleted.is_(False)).group_by(MaintenanceRecord.category).all():
+        maint_by_cat[cat or "未分类"] = {"total": total, "pending": int(pending)}
     user_total = db.query(func.count(User.id)).scalar() or 0
 
     recent_maintenance = [
@@ -45,6 +52,7 @@ def get_summary(db: Session) -> DashboardSummary:
         network_asset_total=net_total, network_asset_active=net_active,
         account_batch_total=batch_total, account_batch_pending=batch_pending,
         maintenance_total=maint_total, maintenance_pending=maint_pending,
+        maintenance_by_category=maint_by_cat,
         user_total=user_total,
         recent_maintenance=recent_maintenance, recent_meetings=recent_meetings,
     )

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -23,7 +23,13 @@ def _ip(r: Request):
 
 
 @router.get("", response_model=dict, dependencies=[Depends(RequirePermission("maintenance:view"))])
-def list_endpoint(q: MaintenanceQuery = Depends(), db: Session = Depends(get_db)):
+def list_endpoint(
+    q: MaintenanceQuery = Depends(),
+    categories: list[str] | None = Query(None, description="按分类筛选(可多选)，用于分组导航整组筛选"),
+    db: Session = Depends(get_db),
+):
+    if categories is not None:
+        q.categories = categories
     items, total, pages = query_maintenance(db, q)
     return ok({
         "items": [MaintenanceListItem.model_validate(i).model_dump() for i in items],

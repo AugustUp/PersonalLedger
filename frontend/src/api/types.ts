@@ -166,6 +166,7 @@ export interface DashboardSummary {
   account_batch_pending: number
   maintenance_total: number
   maintenance_pending: number
+  maintenance_by_category: Record<string, { total: number; pending: number }>
   user_total: number
   recent_maintenance: any[]
   recent_meetings: any[]
@@ -215,3 +216,9 @@ export const MAINTENANCE_CATEGORY_GROUPS: { label: string; options: string[] }[]
 export const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
   MAINTENANCE_CATEGORIES.map((c) => [c, c]),
 )
+
+// 由具体分类反查其所属业务分组（用于导航高亮、列表范围推导）
+export function categoryGroupOf(cat: string): string {
+  const g = MAINTENANCE_CATEGORY_GROUPS.find((x) => x.options.includes(cat))
+  return g ? g.label : '账号类'
+}

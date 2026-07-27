@@ -63,6 +63,8 @@ def query_maintenance(db: Session, q: MaintenanceQuery):
         )
     if q.category:
         query = query.filter(MaintenanceRecord.category == q.category)
+    if q.categories:
+        query = query.filter(MaintenanceRecord.category.in_(q.categories))
     if q.related_system:
         query = query.filter(MaintenanceRecord.related_system.like(f"%{q.related_system}%"))
     if q.status:
@@ -81,7 +83,15 @@ def query_maintenance(db: Session, q: MaintenanceQuery):
     items, total, pages = paginate(query, q.page, q.page_size)
     out = []
     for m in items:
-        d = {k: getattr(m, k) for k in EXPORT_HEADERS}
+        d = {
+            "id": m.id,
+            "created_at": m.created_at,
+            "updated_at": m.updated_at,
+        }
+        for k in EXPORT_HEADERS:
+            if k == "department_name":
+                continue
+            d[k] = getattr(m, k)
         d["department_name"] = _dept_name(db, m.department_id)
         out.append(d)
     return out, total, pages

@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { maintenanceApi, departmentApi, download } from '@/api'
 import { fmtDate, fmtDateTime, fmtDuration } from '@/utils/format'
-import { STATUS_LABELS, CATEGORY_LABELS, MAINTENANCE_CATEGORY_GROUPS } from '@/api/types'
+import { STATUS_LABELS, CATEGORY_LABELS, MAINTENANCE_CATEGORY_GROUPS, categoryGroupOf } from '@/api/types'
 import StatusTag from '@/components/StatusTag.vue'
 import type { DepartmentOut } from '@/api/types'
 
+const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
 const rows = ref<any[]>([])
@@ -17,7 +18,7 @@ const departments = ref<DepartmentOut[]>([])
 const filters = reactive({
   keyword: '',
   status: '',
-  category: '',
+  categories: [] as string[],
   related_system: '',
   handler: '',
   requester: '',
@@ -30,11 +31,43 @@ const page = reactive({ page: 1, page_size: 20 })
 const statusOptions = Object.entries(STATUS_LABELS.maintenance).map(([v, l]) => ({ value: v, label: l }))
 const categoryGroups = MAINTENANCE_CATEGORY_GROUPS
 
+// 支持从工作台（?category=）或侧边栏分组导航（?group=）进入时预筛选
+function applyQuery() {
+  const q = route.query
+  const group = typeof q.group === 'string' ? q.group : ''
+  const cat = typeof q.category === 'string' ? q.category : ''
+  if (group) {
+    const g = MAINTENANCE_CATEGORY_GROUPS.find((x) => x.label === group)
+    filters.categories = g ? [...g.options] : []
+  } else if (cat) {
+    filters.categories = [cat]
+  } else {
+    filters.categories = []
+  }
+  filters.related_system = typeof q.related_system === 'string' ? q.related_system : ''
+}
+
+// 当前分组（用于跳转时保持导航高亮连贯）
+const currentGroup = computed(() => {
+  const g = route.query.group
+  return typeof g === 'string' && g ? g : (filters.categories.length === 1 ? categoryGroupOf(filters.categories[0]) : '')
+})
+const groupQuery = computed(() =>
+  currentGroup.value ? `?group=${encodeURIComponent(currentGroup.value)}` : '',
+)
+const scopeTitle = computed(() => {
+  const g = route.query.group
+  if (typeof g === 'string' && g) return `${g}维护`
+  const c = route.query.category
+  if (typeof c === 'string' && c) return c
+  return '通用维护台账'
+})
+
 function buildParams() {
   return {
     keyword: filters.keyword,
     status: filters.status,
-    category: filters.category,
+    categories: filters.categories,
     related_system: filters.related_system,
     handler: filters.handler,
     requester: filters.requester,
@@ -62,7 +95,7 @@ function onSearch() {
 }
 function onReset() {
     Object.assign(filters, {
-    keyword: '', status: '', category: '', related_system: '', handler: '', requester: '',
+    keyword: '', status: '', categories: [], related_system: '', handler: '', requester: '',
     department_id: null, start_date: '', end_date: '',
   })
   onSearch()
@@ -86,6 +119,7 @@ async function onDelete(row: any) {
 }
 
 onMounted(async () => {
+  applyQuery()
   try {
     const d = await departmentApi.list({ page_size: 200 })
     departments.value = d.items
@@ -94,10 +128,20 @@ onMounted(async () => {
   }
   load()
 })
+
+// 工作台点击不同分类进入同一路由时，复用组件并刷新筛选
+watch(
+  () => route.fullPath,
+  () => {
+    applyQuery()
+    onSearch()
+  },
+)
 </script>
 
 <template>
   <div>
+    <h3 class="page-title">{{ scopeTitle }}</h3>
     <el-card shadow="never" class="filter-card">
       <el-form :inline="true" @submit.prevent>
         <el-form-item label="关键词">
@@ -109,7 +153,7 @@ onMounted(async () => {
           </el-select>
         </el-form-item>
         <el-form-item label="分类">
-          <el-select v-model="filters.category" placeholder="全部" clearable style="width: 150px">
+          <el-select v-model="filters.categories" multiple collapse-tags placeholder="全部" clearable style="width: 220px">
             <el-option-group v-for="g in categoryGroups" :key="g.label" :label="g.label">
               <el-option v-for="c in g.options" :key="c" :label="c" :value="c" />
             </el-option-group>
@@ -144,7 +188,7 @@ onMounted(async () => {
     <el-card shadow="never" style="margin-top: 14px">
       <div class="toolbar">
         <div>
-          <el-button type="primary" v-permission="'maintenance:create'" @click="router.push('/maintenance/new')">
+          <el-button type="primary" v-permission="'maintenance:create'" @click="router.push(`/maintenance/new${groupQuery}`)">
             新增记录
           </el-button>
           <el-button v-permission="'maintenance:export'" @click="onExport">导出</el-button>
@@ -174,8 +218,8 @@ onMounted(async () => {
         </el-table-column>
         <el-table-column label="操作" width="170" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="router.push(`/maintenance/${row.id}`)">详情</el-button>
-            <el-button link type="primary" @click="router.push(`/maintenance/${row.id}/edit`)">编辑</el-button>
+            <el-button link type="primary" @click="router.push(`/maintenance/${row.id}${groupQuery}`)">详情</el-button>
+            <el-button link type="primary" @click="router.push(`/maintenance/${row.id}/edit${groupQuery}`)">编辑</el-button>
             <el-button link type="danger" v-permission="'maintenance:delete'" @click="onDelete(row)">删除</el-button>
           </template>
         </el-table-column>
@@ -197,6 +241,12 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.page-title {
+  margin: 0 0 14px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+}
 .filter-card :deep(.el-form-item) {
   margin-bottom: 12px;
 }

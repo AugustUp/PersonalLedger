@@ -26,6 +26,9 @@ frontend/dist-ssr/
 # Logs
 *.log
 
+# Runtime (pid files for start/stop scripts)
+run/
+
 # Editor / OS
 .idea/
 .vscode/

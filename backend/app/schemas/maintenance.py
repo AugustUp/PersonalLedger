@@ -79,6 +79,7 @@ class MaintenanceUpdate(BaseModel):
 
 class MaintenanceQuery(PageQuery):
     category: str | None = None
+    categories: list[str] | None = None
     related_system: str | None = None
     status: str | None = None
     handler: str | None = None

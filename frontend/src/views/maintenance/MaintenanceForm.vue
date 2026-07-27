@@ -78,8 +78,18 @@ onMounted(async () => {
     } finally {
       loading.value = false
     }
+  } else {
+    // 从侧边栏分组导航进入新建时，默认归类到该组第一个分类
+    const g = typeof route.query.group === 'string' ? route.query.group : ''
+    if (g) {
+      const grp = MAINTENANCE_CATEGORY_GROUPS.find((x) => x.label === g)
+      if (grp && grp.options.length) form.category = grp.options[0]
+    }
   }
 })
+
+const currentGroup = typeof route.query.group === 'string' && route.query.group ? (route.query.group as string) : ''
+const groupQuery = currentGroup ? `?group=${encodeURIComponent(currentGroup)}` : ''
 
 async function onSubmit() {
   if (!formRef.value) return
@@ -94,7 +104,7 @@ async function onSubmit() {
         await maintenanceApi.create(toPayload())
         ElMessage.success('创建成功')
       }
-      router.push('/maintenance')
+      router.push(`/maintenance${groupQuery}`)
     } finally {
       submitting.value = false
     }
@@ -183,7 +193,7 @@ async function onSubmit() {
       </el-form-item>
       <el-form-item>
         <el-button type="primary" :loading="submitting" @click="onSubmit">保存</el-button>
-        <el-button @click="router.push('/maintenance')">取消</el-button>
+        <el-button @click="router.push(`/maintenance${groupQuery}`)">取消</el-button>
       </el-form-item>
     </el-form>
   </el-card>
