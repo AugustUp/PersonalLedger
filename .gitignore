@@ -23,6 +23,9 @@ frontend/dist/
 frontend/dist-ssr/
 *.local
 
+# Logs
+*.log
+
 # Editor / OS
 .idea/
 .vscode/
