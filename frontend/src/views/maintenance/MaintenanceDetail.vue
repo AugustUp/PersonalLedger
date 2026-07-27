@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { maintenanceApi } from '@/api'
 import { fmt, fmtDateTime, fmtDuration } from '@/utils/format'
+import { CATEGORY_LABELS } from '@/api/types'
 import StatusTag from '@/components/StatusTag.vue'
 import AttachmentManager from '@/components/AttachmentManager.vue'
 
@@ -45,7 +46,8 @@ onMounted(async () => {
         <el-descriptions-item label="部门">{{ fmt(detail.department_name) }}</el-descriptions-item>
         <el-descriptions-item label="联系电话">{{ fmt(detail.contact_phone) }}</el-descriptions-item>
         <el-descriptions-item label="地点">{{ fmt(detail.location) }}</el-descriptions-item>
-        <el-descriptions-item label="类别">{{ fmt(detail.category) }}</el-descriptions-item>
+        <el-descriptions-item label="分类">{{ CATEGORY_LABELS[detail.category] || detail.category || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="关联系统/设备">{{ fmt(detail.related_system) }}</el-descriptions-item>
         <el-descriptions-item label="经办人">{{ fmt(detail.handler) }}</el-descriptions-item>
         <el-descriptions-item label="处理时长">{{ fmtDuration(detail.started_at, detail.finished_at) }}</el-descriptions-item>
         <el-descriptions-item label="开始时间">{{ fmtDateTime(detail.started_at) }}</el-descriptions-item>

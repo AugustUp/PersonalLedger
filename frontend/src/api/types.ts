@@ -121,6 +121,7 @@ export interface MaintenanceListItem {
   id: number
   record_no: string
   category: string | null
+  related_system: string | null
   requester: string | null
   department_id: number | null
   department_name: string | null
@@ -187,3 +188,30 @@ export const STATUS_LABELS: Record<string, Record<string, string>> = {
   account_item: { pending: '待处理', success: '成功', failed: '失败', skipped: '跳过' },
   maintenance: { pending: '待处理', processing: '处理中', resolved: '已解决', unresolved: '未解决', closed: '已关闭' },
 }
+
+// 通用维护台账的任务分类（覆盖会议之外的全部运维领域）
+export const MAINTENANCE_CATEGORIES: string[] = [
+  'OA',
+  '邮箱',
+  '终端正版化',
+  '终端安全软件',
+  '网络维护',
+  'WIFI',
+  '告警维护',
+  '封禁IP',
+  'ncecampus无线',
+  '深澜无线',
+  'AC维护AP',
+]
+
+// 分类下拉分组（账号类 / 终端类 / 网络类 / 无线类）
+export const MAINTENANCE_CATEGORY_GROUPS: { label: string; options: string[] }[] = [
+  { label: '账号类', options: ['OA', '邮箱'] },
+  { label: '终端类', options: ['终端正版化', '终端安全软件'] },
+  { label: '网络类', options: ['网络维护', 'WIFI', '告警维护', '封禁IP'] },
+  { label: '无线类', options: ['ncecampus无线', '深澜无线', 'AC维护AP'] },
+]
+
+export const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
+  MAINTENANCE_CATEGORIES.map((c) => [c, c]),
+)

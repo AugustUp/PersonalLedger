@@ -1,12 +1,41 @@
 from datetime import date, datetime
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.common import PageQuery
 
 
+class MaintenanceCategory(str, Enum):
+    """通用维护台账的任务分类（覆盖会议之外的全部运维领域）。"""
+    OA = "OA"
+    EMAIL = "邮箱"
+    TERMINAL_LICENSE = "终端正版化"
+    TERMINAL_SECURITY = "终端安全软件"
+    NETWORK = "网络维护"
+    WIFI = "WIFI"
+    ALARM = "告警维护"
+    IP_BAN = "封禁IP"
+    WIRELESS_NCECAMPUS = "ncecampus无线"
+    WIRELESS_SHENLAN = "深澜无线"
+    WIRELESS_AC_AP = "AC维护AP"
+
+
+# 值 -> 中文标签（与枚举值一致，便于前端直接展示）
+CATEGORY_LABELS: dict[str, str] = {m.value: m.value for m in MaintenanceCategory}
+
+# 分类分组（前端下拉可按组展示）
+CATEGORY_GROUPS: list[tuple[str, list[str]]] = [
+    ("账号类", ["OA", "邮箱"]),
+    ("终端类", ["终端正版化", "终端安全软件"]),
+    ("网络类", ["网络维护", "WIFI", "告警维护", "封禁IP"]),
+    ("无线类", ["ncecampus无线", "深澜无线", "AC维护AP"]),
+]
+
+
 class MaintenanceBase(BaseModel):
-    category: str | None = Field(None, max_length=50)
+    category: MaintenanceCategory | None = None
+    related_system: str | None = Field(None, max_length=100)
     requester: str | None = Field(None, max_length=100)
     department_id: int | None = None
     contact_phone: str | None = Field(None, max_length=50)
@@ -29,7 +58,8 @@ class MaintenanceCreate(MaintenanceBase):
 
 
 class MaintenanceUpdate(BaseModel):
-    category: str | None = Field(None, max_length=50)
+    category: MaintenanceCategory | None = None
+    related_system: str | None = Field(None, max_length=100)
     requester: str | None = Field(None, max_length=100)
     department_id: int | None = None
     contact_phone: str | None = Field(None, max_length=50)
@@ -49,6 +79,7 @@ class MaintenanceUpdate(BaseModel):
 
 class MaintenanceQuery(PageQuery):
     category: str | None = None
+    related_system: str | None = None
     status: str | None = None
     handler: str | None = None
     requester: str | None = None
@@ -64,6 +95,7 @@ class MaintenanceListItem(BaseModel):
     id: int
     record_no: str
     category: str | None = None
+    related_system: str | None = None
     requester: str | None = None
     department_id: int | None = None
     department_name: str | None = None

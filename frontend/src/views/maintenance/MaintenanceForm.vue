@@ -3,7 +3,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, FormInstance, FormRules } from 'element-plus'
 import { maintenanceApi, departmentApi } from '@/api'
-import { STATUS_LABELS } from '@/api/types'
+import { STATUS_LABELS, MAINTENANCE_CATEGORY_GROUPS } from '@/api/types'
 import type { DepartmentOut } from '@/api/types'
 
 const route = useRoute()
@@ -16,6 +16,7 @@ const departments = ref<DepartmentOut[]>([])
 
 const form = reactive({
   category: '',
+  related_system: '',
   requester: '',
   department_id: null as number | null,
   contact_phone: '',
@@ -36,6 +37,7 @@ const rules: FormRules = {
 }
 
 const statusOptions = Object.entries(STATUS_LABELS.maintenance).map(([v, l]) => ({ value: v, label: l }))
+const categoryGroups = MAINTENANCE_CATEGORY_GROUPS
 
 function toPayload() {
   const p: Record<string, any> = { ...form }
@@ -58,6 +60,7 @@ onMounted(async () => {
       const d = await maintenanceApi.get(id)
       Object.assign(form, {
         category: d.category || '',
+        related_system: d.related_system || '',
         requester: d.requester || '',
         department_id: d.department_id,
         contact_phone: d.contact_phone || '',
@@ -127,8 +130,17 @@ async function onSubmit() {
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="类别">
-            <el-input v-model="form.category" placeholder="如 网络/硬件/软件" />
+          <el-form-item label="分类" prop="category">
+            <el-select v-model="form.category" placeholder="选择任务分类" filterable style="width: 100%">
+              <el-option-group v-for="g in categoryGroups" :key="g.label" :label="g.label">
+                <el-option v-for="c in g.options" :key="c" :label="c" :value="c" />
+              </el-option-group>
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="关联系统/设备">
+            <el-input v-model="form.related_system" placeholder="如 NCE-Campus / 深澜 / AC 型号" />
           </el-form-item>
         </el-col>
         <el-col :span="12">

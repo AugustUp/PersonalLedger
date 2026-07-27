@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { maintenanceApi, departmentApi, download } from '@/api'
 import { fmtDate, fmtDateTime, fmtDuration } from '@/utils/format'
-import { STATUS_LABELS } from '@/api/types'
+import { STATUS_LABELS, CATEGORY_LABELS, MAINTENANCE_CATEGORY_GROUPS } from '@/api/types'
 import StatusTag from '@/components/StatusTag.vue'
 import type { DepartmentOut } from '@/api/types'
 
@@ -18,6 +18,7 @@ const filters = reactive({
   keyword: '',
   status: '',
   category: '',
+  related_system: '',
   handler: '',
   requester: '',
   department_id: null as number | null,
@@ -27,12 +28,14 @@ const filters = reactive({
 const page = reactive({ page: 1, page_size: 20 })
 
 const statusOptions = Object.entries(STATUS_LABELS.maintenance).map(([v, l]) => ({ value: v, label: l }))
+const categoryGroups = MAINTENANCE_CATEGORY_GROUPS
 
 function buildParams() {
   return {
     keyword: filters.keyword,
     status: filters.status,
     category: filters.category,
+    related_system: filters.related_system,
     handler: filters.handler,
     requester: filters.requester,
     department_id: filters.department_id,
@@ -58,8 +61,8 @@ function onSearch() {
   load()
 }
 function onReset() {
-  Object.assign(filters, {
-    keyword: '', status: '', category: '', handler: '', requester: '',
+    Object.assign(filters, {
+    keyword: '', status: '', category: '', related_system: '', handler: '', requester: '',
     department_id: null, start_date: '', end_date: '',
   })
   onSearch()
@@ -105,8 +108,15 @@ onMounted(async () => {
             <el-option v-for="o in statusOptions" :key="o.value" :label="o.label" :value="o.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="类别">
-          <el-input v-model="filters.category" placeholder="类别" clearable />
+        <el-form-item label="分类">
+          <el-select v-model="filters.category" placeholder="全部" clearable style="width: 150px">
+            <el-option-group v-for="g in categoryGroups" :key="g.label" :label="g.label">
+              <el-option v-for="c in g.options" :key="c" :label="c" :value="c" />
+            </el-option-group>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="关联系统">
+          <el-input v-model="filters.related_system" placeholder="如 NCE-Campus/深澜/AC" clearable />
         </el-form-item>
         <el-form-item label="经办人">
           <el-input v-model="filters.handler" placeholder="经办人" clearable />
@@ -145,10 +155,13 @@ onMounted(async () => {
       <el-table :data="rows" v-loading="loading" border stripe>
         <el-table-column type="index" label="#" width="50" />
         <el-table-column prop="record_no" label="编号" width="140" />
-        <el-table-column prop="category" label="类别" width="100" />
+        <el-table-column label="分类" width="110">
+          <template #default="{ row }">{{ CATEGORY_LABELS[row.category] || row.category || '-' }}</template>
+        </el-table-column>
         <el-table-column prop="requester" label="报修人" width="100" />
         <el-table-column prop="department_name" label="部门" width="110" />
         <el-table-column prop="location" label="地点" width="120" show-overflow-tooltip />
+        <el-table-column prop="related_system" label="关联系统/设备" width="140" show-overflow-tooltip />
         <el-table-column prop="handler" label="经办人" width="100" />
         <el-table-column label="状态" width="100">
           <template #default="{ row }"><StatusTag module="maintenance" :status="row.status" /></template>

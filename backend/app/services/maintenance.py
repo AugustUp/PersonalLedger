@@ -1,5 +1,6 @@
 """General maintenance ledger service (manual 10.4)."""
 from datetime import datetime
+from enum import Enum
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -13,6 +14,7 @@ from app.utils.query import apply_sort, paginate
 EXPORT_HEADERS = {
     "record_no": "事项编号",
     "category": "类别",
+    "related_system": "关联系统/设备",
     "requester": "报修人",
     "department_name": "部门",
     "location": "地点",
@@ -54,12 +56,15 @@ def query_maintenance(db: Session, q: MaintenanceQuery):
             or_(
                 MaintenanceRecord.requester.like(like),
                 MaintenanceRecord.location.like(like),
+                MaintenanceRecord.related_system.like(like),
                 MaintenanceRecord.problem_description.like(like),
                 MaintenanceRecord.result.like(like),
             )
         )
     if q.category:
         query = query.filter(MaintenanceRecord.category == q.category)
+    if q.related_system:
+        query = query.filter(MaintenanceRecord.related_system.like(f"%{q.related_system}%"))
     if q.status:
         query = query.filter(MaintenanceRecord.status == q.status)
     if q.handler:
@@ -89,8 +94,16 @@ def get_maintenance_or_404(db: Session, rec_id: int) -> MaintenanceRecord:
     return m
 
 
+def _to_persist(payload: dict) -> dict:
+    """将 Pydantic 模型 dump 出的枚举值转为字符串，便于写入 String 列。"""
+    cat = payload.get("category")
+    if isinstance(cat, Enum):
+        payload["category"] = cat.value
+    return payload
+
+
 def create_maintenance(db: Session, data: MaintenanceCreate, user_id: int, ip: str | None) -> MaintenanceRecord:
-    m = MaintenanceRecord(**data.model_dump())
+    m = MaintenanceRecord(**_to_persist(data.model_dump()))
     db.add(m)
     commit_with_no(db, m, MaintenanceRecord, "record_no", "OPS")
     log_operation(db, user_id=user_id, module="maintenance", action="create",
@@ -101,7 +114,7 @@ def create_maintenance(db: Session, data: MaintenanceCreate, user_id: int, ip: s
 
 def update_maintenance(db: Session, rec_id: int, data: MaintenanceUpdate, user_id: int, ip: str | None) -> MaintenanceRecord:
     m = get_maintenance_or_404(db, rec_id)
-    for field, value in data.model_dump(exclude_unset=True).items():
+    for field, value in _to_persist(data.model_dump(exclude_unset=True)).items():
         setattr(m, field, value)
     db.commit()
     db.refresh(m)

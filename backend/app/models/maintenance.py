@@ -10,6 +10,7 @@ class MaintenanceRecord(Base, TimestampMixin, SoftDeleteMixin):
     id = Column(Integer, primary_key=True, autoincrement=True)
     record_no = Column(String(30), unique=True, index=True, nullable=False)
     category = Column(String(50), index=True, nullable=True)
+    related_system = Column(String(100), index=True, nullable=True)
     requester = Column(String(100), nullable=True)
     department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
     contact_phone = Column(String(50), nullable=True)

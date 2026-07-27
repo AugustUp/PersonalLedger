@@ -120,7 +120,7 @@ def test_full_flow(client):
 
     # maintenance
     mt = client.post("/api/v1/maintenance-records",
-                     json={"category": "网络", "requester": "王五",
+                     json={"category": "网络维护", "requester": "王五",
                            "problem_description": "无法上网", "status": "pending"},
                      headers=h).json()["data"]
     assert mt["record_no"].startswith("OPS-")
