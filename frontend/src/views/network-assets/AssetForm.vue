@@ -1,0 +1,208 @@
+<script setup lang="ts">
+import { onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage, FormInstance, FormRules } from 'element-plus'
+import { networkAssetApi, departmentApi } from '@/api'
+import { STATUS_LABELS } from '@/api/types'
+import type { DepartmentOut } from '@/api/types'
+
+const route = useRoute()
+const router = useRouter()
+const formRef = ref<FormInstance>()
+const loading = ref(false)
+const submitting = ref(false)
+const id = route.params.id ? Number(route.params.id) : null
+const departments = ref<DepartmentOut[]>([])
+
+const form = reactive({
+  ip_address: '',
+  mac_address: '',
+  user_name: '',
+  department_id: null as number | null,
+  device_name: '',
+  device_type: '',
+  building: '',
+  room: '',
+  vlan: '',
+  switch_name: '',
+  switch_port: '',
+  account_name: '',
+  status: 'active',
+  registered_at: '' as string,
+  remark: '',
+  change_reason: '',
+})
+
+const rules: FormRules = {
+  ip_address: [{ required: true, message: '请输入 IP 地址', trigger: 'blur' }],
+  mac_address: [{ required: true, message: '请输入 MAC 地址', trigger: 'blur' }],
+  change_reason: [
+    {
+      validator: (_r: any, v: string, cb: any) => {
+        if (id && !v) cb(new Error('修改必须填写修改原因'))
+        else cb()
+      },
+      trigger: 'blur',
+    },
+  ],
+}
+
+const statusOptions = Object.entries(STATUS_LABELS.network_asset).map(([v, l]) => ({ value: v, label: l }))
+
+function toPayload() {
+  const p: Record<string, any> = { ...form }
+  if (p.registered_at === '') p.registered_at = null
+  if (p.department_id === null) delete p.department_id
+  if (!id) delete p.change_reason
+  return p
+}
+
+onMounted(async () => {
+  try {
+    const d = await departmentApi.list({ page_size: 200 })
+    departments.value = d.items
+  } catch {
+    /* ignore */
+  }
+  if (id) {
+    loading.value = true
+    try {
+      const d = await networkAssetApi.get(id)
+      Object.assign(form, {
+        ip_address: d.ip_address || '',
+        mac_address: d.mac_address || '',
+        user_name: d.user_name || '',
+        department_id: d.department_id,
+        device_name: d.device_name || '',
+        device_type: d.device_type || '',
+        building: d.building || '',
+        room: d.room || '',
+        vlan: d.vlan || '',
+        switch_name: d.switch_name || '',
+        switch_port: d.switch_port || '',
+        account_name: d.account_name || '',
+        status: d.status,
+        registered_at: d.registered_at || '',
+        remark: d.remark || '',
+        change_reason: '',
+      })
+    } finally {
+      loading.value = false
+    }
+  }
+})
+
+async function onSubmit() {
+  if (!formRef.value) return
+  await formRef.value.validate(async (valid) => {
+    if (!valid) return
+    submitting.value = true
+    try {
+      if (id) {
+        await networkAssetApi.update(id, toPayload())
+        ElMessage.success('更新成功')
+      } else {
+        await networkAssetApi.create(toPayload())
+        ElMessage.success('创建成功')
+      }
+      router.push('/network-assets')
+    } finally {
+      submitting.value = false
+    }
+  })
+}
+</script>
+
+<template>
+  <el-card v-loading="loading" shadow="never">
+    <template #header><span>{{ id ? '编辑 IP/MAC 记录' : '新增 IP/MAC 记录' }}</span></template>
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="110px" style="max-width: 780px">
+      <el-row :gutter="16">
+        <el-col :span="12">
+          <el-form-item label="IP 地址" prop="ip_address">
+            <el-input v-model="form.ip_address" placeholder="如 192.168.1.10" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="MAC 地址" prop="mac_address">
+            <el-input v-model="form.mac_address" placeholder="如 AA:BB:CC:DD:EE:FF" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="使用人">
+            <el-input v-model="form.user_name" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="部门">
+            <el-select v-model="form.department_id" placeholder="选择部门" clearable filterable style="width: 100%">
+              <el-option v-for="d in departments" :key="d.id" :label="d.name" :value="d.id" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="设备名称">
+            <el-input v-model="form.device_name" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="设备类型">
+            <el-input v-model="form.device_type" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="楼宇">
+            <el-input v-model="form.building" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="房间">
+            <el-input v-model="form.room" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="VLAN">
+            <el-input v-model="form.vlan" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="交换机">
+            <el-input v-model="form.switch_name" placeholder="交换机名称" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="端口">
+            <el-input v-model="form.switch_port" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="账号名称">
+            <el-input v-model="form.account_name" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="登记日期">
+            <el-date-picker v-model="form.registered_at" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="状态">
+            <el-select v-model="form.status" style="width: 100%">
+              <el-option v-for="o in statusOptions" :key="o.value" :label="o.label" :value="o.value" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-form-item label="备注">
+        <el-input v-model="form.remark" type="textarea" :rows="2" />
+      </el-form-item>
+      <el-form-item v-if="id" label="修改原因" prop="change_reason">
+        <el-input v-model="form.change_reason" type="textarea" :rows="2" placeholder="必填，用于变更历史记录" />
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" :loading="submitting" @click="onSubmit">保存</el-button>
+        <el-button @click="router.push('/network-assets')">取消</el-button>
+      </el-form-item>
+    </el-form>
+  </el-card>
+</template>

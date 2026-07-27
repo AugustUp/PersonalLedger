@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Env / secrets
+.env
+.env.*
+
+# Local data, uploads, backups, logs
+data/
+uploads/
+backups/
+logs/
+*.db
+*.db-wal
+*.db-shm
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/

@@ -1,0 +1,23 @@
+[Unit]
+Description=Ops Ledger FastAPI (运维智能台账系统)
+After=network.target
+
+[Service]
+# 统信 UOS / Debian: 使用专用低权限用户运行
+User=opsledger
+Group=opsledger
+WorkingDirectory=/opt/ops-ledger/backend
+EnvironmentFile=/opt/ops-ledger/config/.env
+ExecStart=/opt/ops-ledger/venv/bin/uvicorn app.main:app \
+  --app-dir /opt/ops-ledger/backend \
+  --host 127.0.0.1 \
+  --port 8000 \
+  --workers 1
+Restart=always
+RestartSec=3
+# 避免日志被 journald 吞掉过多
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
