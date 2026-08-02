@@ -21,5 +21,8 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    // CI/sandbox safety: never let vite rmSync the outDir (the local safe-delete
+    // hook blocks recycle-bin operations). Clean `dist` before building instead.
+    emptyOutDir: false,
   },
 })

@@ -10,6 +10,7 @@ class NetworkAssetBase(BaseModel):
     mac_address: str | None = Field(None, max_length=17)
     user_name: str | None = Field(None, max_length=100)
     department_id: int | None = None
+    department_name: str | None = Field(None, max_length=100, description="自由填写部门名：传了则按名查找或自动创建")
     device_name: str | None = Field(None, max_length=150)
     device_type: str | None = Field(None, max_length=50)
     building: str | None = Field(None, max_length=100)
@@ -32,6 +33,7 @@ class NetworkAssetUpdate(BaseModel):
     mac_address: str | None = Field(None, max_length=17)
     user_name: str | None = Field(None, max_length=100)
     department_id: int | None = None
+    department_name: str | None = Field(None, max_length=100, description="自由填写部门名：传了则按名查找或自动创建")
     device_name: str | None = Field(None, max_length=150)
     device_type: str | None = Field(None, max_length=50)
     building: str | None = Field(None, max_length=100)

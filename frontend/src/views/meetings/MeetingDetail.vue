@@ -5,6 +5,7 @@ import { meetingApi } from '@/api'
 import { fmt, fmtBool, fmtDateTime } from '@/utils/format'
 import StatusTag from '@/components/StatusTag.vue'
 import AttachmentManager from '@/components/AttachmentManager.vue'
+import PageHeader from '@/components/PageHeader.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -24,21 +25,19 @@ onMounted(async () => {
 
 <template>
   <div v-loading="loading">
-    <el-card v-if="detail" shadow="never">
-      <template #header>
-        <div class="detail-head">
-          <span>{{ detail.meeting_name }}</span>
-          <div>
-            <el-button v-permission="'meeting:update'" type="primary" @click="router.push(`/meetings/${id}/edit`)">
-              编辑
-            </el-button>
-            <el-button @click="router.push('/meetings')">返回</el-button>
-          </div>
-        </div>
-      </template>
+    <PageHeader
+      :title="detail?.meeting_name || '会议调试详情'"
+      :description="detail ? `编号 ${detail.record_no}` : ''"
+      icon="Calendar"
+    >
+      <el-button v-permission="'meeting:update'" type="primary" @click="router.push(`/meetings/${id}/edit`)">
+        编辑
+      </el-button>
+      <el-button @click="router.push('/meetings')">返回列表</el-button>
+    </PageHeader>
 
+    <el-card v-if="detail" shadow="never">
       <el-descriptions :column="2" border>
-        <el-descriptions-item label="编号">{{ fmt(detail.record_no) }}</el-descriptions-item>
         <el-descriptions-item label="状态">
           <StatusTag module="meeting" :status="detail.status" />
         </el-descriptions-item>
@@ -65,11 +64,4 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.detail-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 600;
-  font-size: 16px;
-}
 </style>

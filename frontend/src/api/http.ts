@@ -78,6 +78,10 @@ export async function patch<T = any>(url: string, body?: any): Promise<T> {
   const r = await http.patch<ApiResult<T>>(url, body)
   return r.data.data
 }
+export async function put<T = any>(url: string, body?: any): Promise<T> {
+  const r = await http.put<ApiResult<T>>(url, body)
+  return r.data.data
+}
 export async function del<T = any>(url: string): Promise<T> {
   const r = await http.delete<ApiResult<T>>(url)
   return r.data.data

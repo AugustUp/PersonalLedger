@@ -6,6 +6,7 @@ import { fmt, fmtDateTime, fmtDuration } from '@/utils/format'
 import { CATEGORY_LABELS } from '@/api/types'
 import StatusTag from '@/components/StatusTag.vue'
 import AttachmentManager from '@/components/AttachmentManager.vue'
+import PageHeader from '@/components/PageHeader.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -25,19 +26,18 @@ onMounted(async () => {
 
 <template>
   <div v-loading="loading">
-    <el-card v-if="detail" shadow="never">
-      <template #header>
-        <div class="detail-head">
-          <span>{{ detail.record_no }}</span>
-          <div>
-            <el-button v-permission="'maintenance:update'" type="primary" @click="router.push(`/maintenance/${id}/edit`)">
-              编辑
-            </el-button>
-            <el-button @click="router.push('/maintenance')">返回</el-button>
-          </div>
-        </div>
-      </template>
+    <PageHeader
+      :title="detail ? `${CATEGORY_LABELS[detail.category] || detail.category || '通用'}维护记录` : '维护记录详情'"
+      :description="detail ? `编号 ${detail.record_no}` : ''"
+      icon="Tools"
+    >
+      <el-button v-permission="'maintenance:update'" type="primary" @click="router.push(`/maintenance/${id}/edit`)">
+        编辑
+      </el-button>
+      <el-button @click="router.push('/maintenance')">返回列表</el-button>
+    </PageHeader>
 
+    <el-card v-if="detail" shadow="never">
       <el-descriptions :column="2" border>
         <el-descriptions-item label="状态">
           <StatusTag module="maintenance" :status="detail.status" />
@@ -68,11 +68,4 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.detail-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 600;
-  font-size: 16px;
-}
 </style>

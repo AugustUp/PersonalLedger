@@ -141,6 +141,18 @@ const routes = [
         component: () => import('@/views/system/OperationLogList.vue'),
         meta: { title: '操作日志', permission: 'system:log_view' },
       },
+      {
+        path: 'system/backup',
+        name: 'system-backup',
+        component: () => import('@/views/system/BackupList.vue'),
+        meta: { title: '数据备份', permission: 'system:backup_manage' },
+      },
+      {
+        path: 'system/customization',
+        name: 'system-customization',
+        component: () => import('@/views/system/CustomizationView.vue'),
+        meta: { title: '台账定制', permission: 'system:config_manage' },
+      },
     ],
   },
   {

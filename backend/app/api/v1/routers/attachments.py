@@ -29,8 +29,11 @@ _BIZ_PERM = {
 
 
 def _check_biz_perm(user: User, business_type: str):
+    """business_type 必须在白名单内（防路径穿越/任意目录写入），再校验业务权限。"""
     perm = _BIZ_PERM.get(business_type)
-    if perm and not has_permission(user, perm):
+    if perm is None:
+        raise forbidden("不支持的附件业务类型")
+    if not has_permission(user, perm):
         raise forbidden("无权限访问该业务的附件")
 
 

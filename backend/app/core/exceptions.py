@@ -31,6 +31,7 @@ E_FORBIDDEN = 40301
 E_NOT_FOUND = 40411
 E_CONFLICT = 40911
 E_FILE_TOO_LARGE = 41301
+E_TOO_MANY_REQUESTS = 42901
 E_IMPORT_FORMAT = 42211
 E_INTERNAL = 50001
 
@@ -61,6 +62,10 @@ def duplicate(message: str, data=None):
 
 def file_too_large(message: str = "文件超过上传限制", data=None):
     return BizError(E_FILE_TOO_LARGE, message, data)
+
+
+def too_many_requests(message: str = "请求过于频繁，请稍后再试", data=None):
+    return BizError(E_TOO_MANY_REQUESTS, message, data)
 
 
 def import_format(message: str, data=None):

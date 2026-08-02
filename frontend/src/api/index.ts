@@ -1,7 +1,7 @@
 // Centralized API client. Every function returns the backend `data` field
 // (see http.ts). Export endpoints are binary downloads handled by `download`.
 import { ElMessage } from 'element-plus'
-import { get, post, patch, del, upload } from './http'
+import { get, post, patch, put, del, upload } from './http'
 import { useUserStore } from '@/stores/user'
 import type {
   AccountBatchDetail,
@@ -11,6 +11,7 @@ import type {
   DashboardSummary,
   DepartmentOut,
   ImportPreview,
+  LedgerCustomization,
   MaintenanceDetail,
   MaintenanceListItem,
   MeetingDetail,
@@ -69,11 +70,18 @@ export const userApi = {
     real_name: string
     role: string
     department_id?: number | null
+    department_name?: string | null
     is_active?: boolean
   }) => post<UserOut>('/users', body),
   update: (
     id: number,
-    body: { real_name?: string; role?: string; department_id?: number | null; is_active?: boolean },
+    body: {
+      real_name?: string
+      role?: string
+      department_id?: number | null
+      department_name?: string | null
+      is_active?: boolean
+    },
   ) => patch<UserOut>(`/users/${id}`, body),
   resetPassword: (id: number, new_password: string) =>
     post(`/users/${id}/reset-password`, { new_password }),
@@ -172,6 +180,28 @@ export const dashboardApi = {
 
 export const operationLogApi = {
   list: (params: Record<string, any>) => get<PageResult<OperationLog>>('/operation-logs', clean(params)),
+}
+
+// ---------------------------------------------------------------------------
+// Database backup (system:backup_manage)
+// ---------------------------------------------------------------------------
+export interface BackupFile {
+  filename: string
+  size: number
+  created_at: string
+}
+
+export const backupApi = {
+  list: () => get<BackupFile[]>('/system/backup'),
+  create: () => post<BackupFile>('/system/backup', {}),
+}
+
+// ---------------------------------------------------------------------------
+// Ledger customization (system:config_manage for writes)
+// ---------------------------------------------------------------------------
+export const customizationApi = {
+  get: () => get<LedgerCustomization>('/customization/config'),
+  update: (patch: Partial<LedgerCustomization>) => put<LedgerCustomization>('/customization/config', patch),
 }
 
 // ---------------------------------------------------------------------------

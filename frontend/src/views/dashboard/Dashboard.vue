@@ -1,23 +1,24 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { dashboardApi } from '@/api'
 import { fmtDateTime } from '@/utils/format'
+import { useConfigStore } from '@/stores/config'
 import type { DashboardSummary } from '@/api/types'
-import { MAINTENANCE_CATEGORY_GROUPS } from '@/api/types'
 
 const router = useRouter()
+const config = useConfigStore()
 const loading = ref(false)
 const data = ref<DashboardSummary | null>(null)
 
 const moduleCards = ref([
-  { key: 'meeting', title: '会议调试台账', icon: 'Calendar', color: '#409eff', total: 0, pending: 0, to: '/meetings' },
-  { key: 'network', title: 'IP/MAC 台账', icon: 'Connection', color: '#67c23a', total: 0, pending: 0, to: '/network-assets' },
-  { key: 'account', title: '批量账号台账', icon: 'Files', color: '#e6a23c', total: 0, pending: 0, to: '/account-batches' },
-  { key: 'maintenance', title: '通用维护台账', icon: 'Tools', color: '#f56c6c', total: 0, pending: 0, to: '/maintenance' },
+  { key: 'meetings', titleKey: 'meetings', icon: 'Calendar', color: '#409eff', total: 0, pending: 0, to: '/meetings' },
+  { key: 'network', titleKey: 'network_assets', icon: 'Connection', color: '#67c23a', total: 0, pending: 0, to: '/network-assets' },
+  { key: 'account', titleKey: 'account_batches', icon: 'Files', color: '#e6a23c', total: 0, pending: 0, to: '/account-batches' },
+  { key: 'maintenance', titleKey: 'maintenance', icon: 'Tools', color: '#f56c6c', total: 0, pending: 0, to: '/maintenance' },
 ])
 
-const catGroups = MAINTENANCE_CATEGORY_GROUPS
+const catGroups = computed(() => config.categoryGroups())
 
 function catStat(c: string) {
   const m = data.value?.maintenance_by_category || {}
@@ -42,11 +43,32 @@ async function load() {
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  config.fetch()
+  load()
+})
 </script>
 
 <template>
   <div v-loading="loading">
+    <el-card shadow="never" class="quick-card">
+      <div class="quick-bar">
+        <span class="quick-label">快捷操作</span>
+        <el-button v-permission="'meeting:create'" @click="router.push('/meetings/new')">
+          <el-icon style="margin-right: 4px"><Plus /></el-icon>新增会议调试
+        </el-button>
+        <el-button v-permission="'maintenance:create'" type="primary" @click="router.push('/maintenance/new')">
+          <el-icon style="margin-right: 4px"><Plus /></el-icon>新增维护记录
+        </el-button>
+        <el-button v-permission="'network_asset:import'" @click="router.push('/network-assets/import')">
+          <el-icon style="margin-right: 4px"><Upload /></el-icon>导入 IP/MAC
+        </el-button>
+        <el-button v-permission="'account_batch:create'" @click="router.push('/account-batches/new')">
+          <el-icon style="margin-right: 4px"><Plus /></el-icon>新增账号批次
+        </el-button>
+      </div>
+    </el-card>
+
     <h3 class="section-title">业务台账总览</h3>
     <el-row :gutter="16">
       <el-col v-for="c in moduleCards" :key="c.key" :xs="12" :sm="12" :md="6">
@@ -55,7 +77,7 @@ onMounted(load)
             <el-icon><component :is="c.icon" /></el-icon>
           </div>
           <div class="stat-body">
-            <div class="stat-title">{{ c.title }}</div>
+            <div class="stat-title">{{ config.ledgerName(c.titleKey) }}</div>
             <div class="stat-total">{{ c.total }}</div>
             <div class="stat-sub">待处理 / 进行中：{{ c.pending }}</div>
           </div>
@@ -117,6 +139,20 @@ onMounted(load)
 </template>
 
 <style scoped>
+.quick-card {
+  margin-bottom: 16px;
+}
+.quick-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.quick-label {
+  font-size: 13px;
+  color: #909399;
+  margin-right: 4px;
+}
 .section-title {
   margin: 0 0 12px;
   font-size: 15px;

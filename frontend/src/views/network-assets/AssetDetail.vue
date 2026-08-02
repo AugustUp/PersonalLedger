@@ -5,6 +5,7 @@ import { networkAssetApi } from '@/api'
 import { fmt, fmtDate, fmtDateTime } from '@/utils/format'
 import StatusTag from '@/components/StatusTag.vue'
 import AttachmentManager from '@/components/AttachmentManager.vue'
+import PageHeader from '@/components/PageHeader.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -26,19 +27,18 @@ onMounted(async () => {
 
 <template>
   <div v-loading="loading">
-    <el-card v-if="detail" shadow="never">
-      <template #header>
-        <div class="detail-head">
-          <span>{{ detail.ip_address }} / {{ detail.mac_address }}</span>
-          <div>
-            <el-button v-permission="'network_asset:update'" type="primary" @click="router.push(`/network-assets/${id}/edit`)">
-              编辑
-            </el-button>
-            <el-button @click="router.push('/network-assets')">返回</el-button>
-          </div>
-        </div>
-      </template>
+    <PageHeader
+      :title="detail ? `${detail.ip_address || ''} / ${detail.mac_address || ''}` : 'IP/MAC 详情'"
+      :description="detail && detail.user_name ? `使用人：${detail.user_name}` : ''"
+      icon="Connection"
+    >
+      <el-button v-permission="'network_asset:update'" type="primary" @click="router.push(`/network-assets/${id}/edit`)">
+        编辑
+      </el-button>
+      <el-button @click="router.push('/network-assets')">返回列表</el-button>
+    </PageHeader>
 
+    <el-card v-if="detail" shadow="never">
       <el-descriptions :column="2" border>
         <el-descriptions-item label="状态">
           <StatusTag module="network_asset" :status="detail.status" />
@@ -80,13 +80,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.detail-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 600;
-  font-size: 16px;
-}
 .history-reason {
   color: #909399;
   font-size: 12px;

@@ -7,6 +7,7 @@ class UserBase(BaseModel):
     real_name: str = Field(..., min_length=1, max_length=50)
     role: str = Field("operator", pattern="^(admin|manager|operator)$")
     department_id: int | None = None
+    department_name: str | None = Field(None, max_length=100, description="自由填写部门名：传了则按名查找或自动创建")
     is_active: bool = True
 
 
@@ -19,6 +20,7 @@ class UserUpdate(BaseModel):
     real_name: str | None = Field(None, max_length=50)
     role: str | None = Field(None, pattern="^(admin|manager|operator)$")
     department_id: int | None = None
+    department_name: str | None = Field(None, max_length=100, description="自由填写部门名：传了则按名查找或自动创建")
     is_active: bool | None = None
 
 

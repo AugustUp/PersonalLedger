@@ -68,7 +68,7 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         "maintenance:view", "maintenance:create", "maintenance:update",
         "maintenance:delete", "maintenance:export",
         "system:user_manage", "system:department_manage",
-        "system:log_view", "system:backup_manage",
+        "system:log_view", "system:backup_manage", "system:config_manage",
     },
 }
 

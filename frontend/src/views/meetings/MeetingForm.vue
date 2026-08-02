@@ -4,7 +4,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, FormInstance, FormRules } from 'element-plus'
 import { meetingApi } from '@/api'
 import { STATUS_LABELS } from '@/api/types'
+import { useConfigStore } from '@/stores/config'
+import PageHeader from '@/components/PageHeader.vue'
 
+const config = useConfigStore()
+const fl = config.fieldLabel
 const route = useRoute()
 const router = useRouter()
 const formRef = ref<FormInstance>()
@@ -90,65 +94,95 @@ async function onSubmit() {
 </script>
 
 <template>
-  <el-card v-loading="loading" shadow="never">
-    <template #header>
-      <span>{{ id ? '编辑会议调试' : '新增会议调试' }}</span>
-    </template>
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="110px" style="max-width: 760px">
-      <el-form-item label="会议名称" prop="meeting_name">
-        <el-input v-model="form.meeting_name" placeholder="请输入会议名称" />
-      </el-form-item>
-      <el-form-item label="会议时间">
-        <el-date-picker
-          v-model="form.meeting_time"
-          type="datetime"
-          value-format="YYYY-MM-DD HH:mm:ss"
-          placeholder="选择时间"
-          style="width: 100%"
-        />
-      </el-form-item>
-      <el-form-item label="地点">
-        <el-input v-model="form.location" />
-      </el-form-item>
-      <el-form-item label="联系人">
-        <el-input v-model="form.contact_name" />
-      </el-form-item>
-      <el-form-item label="联系电话">
-        <el-input v-model="form.contact_phone" />
-      </el-form-item>
-      <el-form-item label="调试人员">
-        <el-input v-model="form.technicians" placeholder="多个用逗号分隔" />
-      </el-form-item>
-      <el-form-item label="设备">
-        <el-input v-model="form.equipment" type="textarea" :rows="2" />
-      </el-form-item>
-      <el-form-item label="调试内容">
-        <el-input v-model="form.debug_content" type="textarea" :rows="3" />
-      </el-form-item>
-      <el-form-item label="问题">
-        <el-input v-model="form.problem_description" type="textarea" :rows="2" />
-      </el-form-item>
-      <el-form-item label="处理过程">
-        <el-input v-model="form.handling_process" type="textarea" :rows="3" />
-      </el-form-item>
-      <el-form-item label="结果">
-        <el-input v-model="form.result" type="textarea" :rows="2" />
-      </el-form-item>
-      <el-form-item label="现场保障">
-        <el-switch v-model="form.onsite_support" />
-      </el-form-item>
-      <el-form-item label="状态">
-        <el-select v-model="form.status" style="width: 200px">
-          <el-option v-for="o in statusOptions" :key="o.value" :label="o.label" :value="o.value" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="备注">
-        <el-input v-model="form.remark" type="textarea" :rows="2" />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" :loading="submitting" @click="onSubmit">保存</el-button>
-        <el-button @click="router.push('/meetings')">取消</el-button>
-      </el-form-item>
-    </el-form>
-  </el-card>
+  <div>
+    <PageHeader :title="id ? '编辑会议调试' : '新增会议调试'" description="登记会议信息、调试内容与处理结果" icon="Calendar">
+      <el-button @click="router.push('/meetings')">返回列表</el-button>
+    </PageHeader>
+
+    <el-card v-loading="loading" shadow="never">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" class="meeting-form">
+        <el-row :gutter="20">
+          <el-col :xs="24" :sm="24" :md="12">
+            <el-form-item :label="fl('meetings', 'meeting_name')" prop="meeting_name">
+              <el-input v-model="form.meeting_name" placeholder="请输入会议名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="24" :md="12">
+            <el-form-item :label="fl('meetings', 'meeting_time')">
+              <el-date-picker
+                v-model="form.meeting_time"
+                type="datetime"
+                value-format="YYYY-MM-DD HH:mm:ss"
+                placeholder="选择时间"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="24" :md="12">
+            <el-form-item :label="fl('meetings', 'location')">
+              <el-input v-model="form.location" placeholder="会议室 / 场地" />
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="24" :md="12">
+            <el-form-item :label="fl('meetings', 'technicians')">
+              <el-input v-model="form.technicians" placeholder="多个用逗号分隔" />
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="24" :md="12">
+            <el-form-item :label="fl('meetings', 'contact_name')">
+              <el-input v-model="form.contact_name" />
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="24" :md="12">
+            <el-form-item :label="fl('meetings', 'contact_phone')">
+              <el-input v-model="form.contact_phone" />
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="24" :md="12">
+            <el-form-item :label="fl('meetings', 'status')">
+              <el-select v-model="form.status" style="width: 100%">
+                <el-option v-for="o in statusOptions" :key="o.value" :label="o.label" :value="o.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="24" :md="12">
+            <el-form-item :label="fl('meetings', 'onsite_support')">
+              <el-switch v-model="form.onsite_support" active-text="需要" inactive-text="不需要" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item :label="fl('meetings', 'equipment')">
+          <el-input v-model="form.equipment" type="textarea" :rows="2" placeholder="使用的设备 / 线材 / 素材" />
+        </el-form-item>
+        <el-form-item :label="fl('meetings', 'debug_content')">
+          <el-input v-model="form.debug_content" type="textarea" :rows="3" />
+        </el-form-item>
+        <el-form-item :label="fl('meetings', 'problem_description')">
+          <el-input v-model="form.problem_description" type="textarea" :rows="2" />
+        </el-form-item>
+        <el-form-item :label="fl('meetings', 'handling_process')">
+          <el-input v-model="form.handling_process" type="textarea" :rows="3" />
+        </el-form-item>
+        <el-form-item :label="fl('meetings', 'result')">
+          <el-input v-model="form.result" type="textarea" :rows="2" />
+        </el-form-item>
+        <el-form-item :label="fl('meetings', 'remark')">
+          <el-input v-model="form.remark" type="textarea" :rows="2" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="submitting" @click="onSubmit">保存</el-button>
+          <el-button @click="router.push('/meetings')">取消</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
+  </div>
 </template>
+
+<style scoped>
+.meeting-form {
+  max-width: 960px;
+}
+.meeting-form :deep(.el-form-item) {
+  margin-bottom: 20px;
+}
+</style>

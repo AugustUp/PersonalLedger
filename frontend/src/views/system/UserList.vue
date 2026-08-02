@@ -23,7 +23,7 @@ const form = reactive({
   password: '',
   real_name: '',
   role: 'operator',
-  department_id: null as number | null,
+  department_id: null as number | string | null,
   is_active: true,
 })
 
@@ -48,6 +48,18 @@ const resetPwd = ref('')
 const resetSaving = ref(false)
 
 const roleLabel: Record<string, string> = { admin: '系统管理员', manager: '运维管理员', operator: '普通运维' }
+
+// 部门自由填写：输入的新部门名转 department_name 提交（后端按名查找或自动创建）
+function normalizeDept(body: Record<string, any>): any {
+  const p = { ...body }
+  if (p.department_id === null || p.department_id === '') {
+    delete p.department_id
+  } else if (typeof p.department_id === 'string') {
+    p.department_name = p.department_id.trim()
+    delete p.department_id
+  }
+  return p
+}
 
 async function load() {
   loading.value = true
@@ -84,13 +96,13 @@ async function onSubmit() {
     try {
       if (dialogMode.value === 'create') {
         const { id, ...body } = form
-        await userApi.create(body)
+        await userApi.create(normalizeDept(body))
         ElMessage.success('创建成功')
       } else {
         const body: Record<string, any> = {
           real_name: form.real_name, role: form.role, department_id: form.department_id, is_active: form.is_active,
         }
-        await userApi.update(form.id, body)
+        await userApi.update(form.id, normalizeDept(body))
         ElMessage.success('更新成功')
       }
       dialogVisible.value = false
@@ -210,7 +222,15 @@ onMounted(async () => {
           </el-select>
         </el-form-item>
         <el-form-item label="部门">
-          <el-select v-model="form.department_id" placeholder="选择部门" clearable filterable style="width: 100%">
+          <el-select
+            v-model="form.department_id"
+            placeholder="选择部门或直接输入"
+            clearable
+            filterable
+            allow-create
+            default-first-option
+            style="width: 100%"
+          >
             <el-option v-for="d in departments" :key="d.id" :label="d.name" :value="d.id" />
           </el-select>
         </el-form-item>

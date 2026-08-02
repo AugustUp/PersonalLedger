@@ -6,6 +6,8 @@ import { networkAssetApi, departmentApi, download } from '@/api'
 import { fmtDate, fmtDateTime } from '@/utils/format'
 import { STATUS_LABELS } from '@/api/types'
 import StatusTag from '@/components/StatusTag.vue'
+import PageHeader from '@/components/PageHeader.vue'
+import EmptyHint from '@/components/EmptyHint.vue'
 import type { DepartmentOut } from '@/api/types'
 
 const router = useRouter()
@@ -86,6 +88,15 @@ onMounted(async () => {
 
 <template>
   <div>
+    <PageHeader title="IP/MAC 台账" description="登记终端 IP、MAC 与使用人信息，支持批量导入" icon="Connection">
+      <el-button v-permission="'network_asset:create'" type="primary" @click="router.push('/network-assets/new')">
+        <el-icon style="margin-right: 4px"><Plus /></el-icon>新增记录
+      </el-button>
+      <el-button v-permission="'network_asset:import'" @click="router.push('/network-assets/import')">批量导入</el-button>
+      <el-button v-permission="'network_asset:export'" @click="onExport">
+        <el-icon style="margin-right: 4px"><Download /></el-icon>导出
+      </el-button>
+    </PageHeader>
     <el-card shadow="never" class="filter-card">
       <el-form :inline="true" @submit.prevent>
         <el-form-item label="IP">
@@ -125,16 +136,7 @@ onMounted(async () => {
 
     <el-card shadow="never" style="margin-top: 14px">
       <div class="toolbar">
-        <div>
-          <el-button type="primary" v-permission="'network_asset:create'" @click="router.push('/network-assets/new')">
-            新增记录
-          </el-button>
-          <el-button v-permission="'network_asset:import'" @click="router.push('/network-assets/import')">
-            批量导入
-          </el-button>
-          <el-button v-permission="'network_asset:export'" @click="onExport">导出</el-button>
-        </div>
-        <span class="total-text">共 {{ total }} 条</span>
+        <span class="total-text">共 {{ total }} 条记录</span>
       </div>
 
       <el-table :data="rows" v-loading="loading" border stripe>
@@ -161,6 +163,13 @@ onMounted(async () => {
             <el-button link type="primary" @click="router.push(`/network-assets/${row.id}/edit`)">编辑</el-button>
           </template>
         </el-table-column>
+        <template #empty>
+          <EmptyHint text="暂无 IP/MAC 记录">
+            <el-button v-if="total === 0" size="small" type="primary" plain @click="router.push('/network-assets/new')">
+              新增第一条记录
+            </el-button>
+          </EmptyHint>
+        </template>
       </el-table>
 
       <el-pagination

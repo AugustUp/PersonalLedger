@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import RequirePermission, get_current_user
 from app.core.exceptions import ok
+from app.models.department import Department
 from app.models.user import User
 from app.schemas.maintenance import (
     MaintenanceCreate, MaintenanceDetail, MaintenanceListItem, MaintenanceQuery,
@@ -20,6 +21,13 @@ router = APIRouter(prefix="/maintenance-records", tags=["maintenance"])
 
 def _ip(r: Request):
     return r.client.host if r.client else None
+
+
+def _detail(db: Session, m) -> dict:
+    """构造详情/创建/更新响应，补充部门名称（model 无该属性）。"""
+    d = MaintenanceDetail.model_validate(m).model_dump()
+    d["department_name"] = db.get(Department, m.department_id).name if m.department_id else None
+    return d
 
 
 @router.get("", response_model=dict, dependencies=[Depends(RequirePermission("maintenance:view"))])
@@ -41,7 +49,7 @@ def list_endpoint(
 def create_endpoint(payload: MaintenanceCreate, request: Request,
                     db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     m = create_maintenance(db, payload, user.id, _ip(request))
-    return ok(MaintenanceDetail.model_validate(m).model_dump(), message="创建成功")
+    return ok(_detail(db, m), message="创建成功")
 
 
 @router.get("/export", response_model=dict,
@@ -56,7 +64,7 @@ def export_endpoint(q: MaintenanceQuery = Depends(), bg: BackgroundTasks = Backg
             dependencies=[Depends(RequirePermission("maintenance:view"))])
 def detail_endpoint(rec_id: int, db: Session = Depends(get_db)):
     m = get_maintenance_or_404(db, rec_id)
-    return ok(MaintenanceDetail.model_validate(m).model_dump())
+    return ok(_detail(db, m))
 
 
 @router.patch("/{rec_id}", response_model=dict,
@@ -64,7 +72,7 @@ def detail_endpoint(rec_id: int, db: Session = Depends(get_db)):
 def update_endpoint(rec_id: int, payload: MaintenanceUpdate, request: Request,
                     db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     m = update_maintenance(db, rec_id, payload, user.id, _ip(request))
-    return ok(MaintenanceDetail.model_validate(m).model_dump(), message="更新成功")
+    return ok(_detail(db, m), message="更新成功")
 
 
 @router.delete("/{rec_id}", response_model=dict,
@@ -80,4 +88,4 @@ def delete_endpoint(rec_id: int, request: Request, db: Session = Depends(get_db)
 def restore_endpoint(rec_id: int, request: Request, db: Session = Depends(get_db),
                      user: User = Depends(get_current_user)):
     m = restore_maintenance(db, rec_id, user.id, _ip(request))
-    return ok(MaintenanceDetail.model_validate(m).model_dump(), message="已恢复")
+    return ok(_detail(db, m), message="已恢复")

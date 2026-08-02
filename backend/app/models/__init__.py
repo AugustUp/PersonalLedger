@@ -7,6 +7,7 @@ from app.models.maintenance import MaintenanceRecord
 from app.models.meeting import MeetingRecord
 from app.models.network_asset import NetworkAsset, NetworkAssetHistory
 from app.models.operation_log import OperationLog
+from app.models.system_config import SystemConfig
 from app.models.user import User
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "MaintenanceRecord",
     "Attachment",
     "OperationLog",
+    "SystemConfig",
 ]

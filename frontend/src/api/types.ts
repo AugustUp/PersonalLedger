@@ -172,6 +172,17 @@ export interface DashboardSummary {
   recent_meetings: any[]
 }
 
+// 台账定制配置（模块名称 / 维护分类 / 字段标签）
+export interface CategoryGroup {
+  label: string
+  options: string[]
+}
+export interface LedgerCustomization {
+  ledger_names: Record<string, string>
+  maintenance_categories: CategoryGroup[]
+  field_meta: Record<string, Record<string, { label: string }>>
+}
+
 export interface ImportPreview {
   import_token: string
   total_rows: number

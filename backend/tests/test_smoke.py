@@ -125,6 +125,29 @@ def test_full_flow(client):
                      headers=h).json()["data"]
     assert mt["record_no"].startswith("OPS-")
 
+    # 自由填写部门：自动创建 + 同名复用
+    mf1 = client.post("/api/v1/maintenance-records",
+                      json={"category": "OA", "requester": "自由部门测试",
+                            "department_name": "自由部门X",
+                            "problem_description": "部门自由填写测试", "status": "pending"},
+                      headers=h).json()["data"]
+    assert mf1["department_name"] == "自由部门X"
+    mf2 = client.post("/api/v1/maintenance-records",
+                      json={"category": "邮箱", "requester": "自由部门测试2",
+                            "department_name": "自由部门X",
+                            "problem_description": "部门复用测试", "status": "pending"},
+                      headers=h).json()["data"]
+    assert mf2["department_name"] == "自由部门X"
+    deps = client.get("/api/v1/departments", params={"keyword": "自由部门X"}, headers=h).json()["data"]
+    assert deps["total"] == 1
+
+    # IP/MAC 台账自由填写部门
+    af = client.post("/api/v1/network-assets",
+                     json={"ip_address": "10.0.0.99", "mac_address": "AA:BB:CC:00:99:99",
+                           "user_name": "自由部门测试", "department_name": "自由部门Y",
+                           "status": "active"}, headers=h).json()["data"]
+    assert af["department_name"] == "自由部门Y"
+
     # dashboard
     dash = client.get("/api/v1/dashboard/summary", headers=h).json()["data"]
     assert dash["meeting_total"] >= 1

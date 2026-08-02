@@ -7,6 +7,7 @@ from app.core.database import get_db
 from app.core.deps import RequirePermission, get_current_user
 from app.core.exceptions import ok
 from app.core.exceptions import bad_request
+from app.models.department import Department
 from app.models.user import User
 from app.schemas.network_asset import (
     ImportCommit, ImportPreview, NetworkAssetCreate, NetworkAssetDetail,
@@ -24,6 +25,13 @@ router = APIRouter(prefix="/network-assets", tags=["network-assets"])
 
 def _ip(r: Request):
     return r.client.host if r.client else None
+
+
+def _detail(db: Session, a) -> dict:
+    """构造详情/创建/更新响应，补充部门名称（model 无该属性）。"""
+    d = NetworkAssetDetail.model_validate(a).model_dump()
+    d["department_name"] = db.get(Department, a.department_id).name if a.department_id else None
+    return d
 
 
 async def _save_temp(file: UploadFile) -> str:
@@ -46,7 +54,7 @@ def list_endpoint(q: NetworkAssetQuery = Depends(), db: Session = Depends(get_db
 def create_endpoint(payload: NetworkAssetCreate, request: Request,
                     db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     a = create_asset(db, payload, user.id, _ip(request))
-    return ok(NetworkAssetDetail.model_validate(a).model_dump(), message="创建成功")
+    return ok(_detail(db, a), message="创建成功")
 
 
 @router.get("/export", response_model=dict,
@@ -61,7 +69,7 @@ def export_endpoint(q: NetworkAssetQuery = Depends(), bg: BackgroundTasks = Back
             dependencies=[Depends(RequirePermission("network_asset:view"))])
 def detail_endpoint(asset_id: int, db: Session = Depends(get_db)):
     a = get_asset_or_404(db, asset_id)
-    return ok(NetworkAssetDetail.model_validate(a).model_dump())
+    return ok(_detail(db, a))
 
 
 @router.get("/{asset_id}/histories", response_model=dict,
@@ -77,7 +85,7 @@ def histories_endpoint(asset_id: int, db: Session = Depends(get_db)):
 def update_endpoint(asset_id: int, payload: NetworkAssetUpdate, request: Request,
                     db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     a = update_asset(db, asset_id, payload, user.id, _ip(request))
-    return ok(NetworkAssetDetail.model_validate(a).model_dump(), message="更新成功")
+    return ok(_detail(db, a), message="更新成功")
 
 
 @router.post("/import/preview", response_model=dict,

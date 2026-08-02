@@ -6,6 +6,8 @@ import { accountBatchApi, download } from '@/api'
 import { fmtDate, fmtDateTime } from '@/utils/format'
 import { STATUS_LABELS } from '@/api/types'
 import StatusTag from '@/components/StatusTag.vue'
+import PageHeader from '@/components/PageHeader.vue'
+import EmptyHint from '@/components/EmptyHint.vue'
 
 const router = useRouter()
 const loading = ref(false)
@@ -74,6 +76,14 @@ onMounted(load)
 
 <template>
   <div>
+    <PageHeader title="批量账号台账" description="按批次管理 OA / 邮箱等账号的开通与导入记录" icon="Files">
+      <el-button v-permission="'account_batch:create'" type="primary" @click="router.push('/account-batches/new')">
+        <el-icon style="margin-right: 4px"><Plus /></el-icon>新增批次
+      </el-button>
+      <el-button v-permission="'account_batch:import'" @click="onTemplate">
+        <el-icon style="margin-right: 4px"><Download /></el-icon>下载模板
+      </el-button>
+    </PageHeader>
     <el-card shadow="never" class="filter-card">
       <el-form :inline="true" @submit.prevent>
         <el-form-item label="批次名称">
@@ -104,13 +114,7 @@ onMounted(load)
 
     <el-card shadow="never" style="margin-top: 14px">
       <div class="toolbar">
-        <div>
-          <el-button type="primary" v-permission="'account_batch:create'" @click="router.push('/account-batches/new')">
-            新增批次
-          </el-button>
-          <el-button v-permission="'account_batch:import'" @click="onTemplate">下载模板</el-button>
-        </div>
-        <span class="total-text">共 {{ total }} 条</span>
+        <span class="total-text">共 {{ total }} 条记录</span>
       </div>
 
       <el-table :data="rows" v-loading="loading" border stripe>
@@ -138,6 +142,13 @@ onMounted(load)
             <el-button link type="danger" v-permission="'account_batch:delete'" @click="onDelete(row)">作废</el-button>
           </template>
         </el-table-column>
+        <template #empty>
+          <EmptyHint text="暂无账号批次">
+            <el-button v-if="total === 0" size="small" type="primary" plain @click="router.push('/account-batches/new')">
+              新增第一个批次
+            </el-button>
+          </EmptyHint>
+        </template>
       </el-table>
 
       <el-pagination

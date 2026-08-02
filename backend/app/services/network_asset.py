@@ -14,7 +14,8 @@ from app.schemas.network_asset import (
     NetworkAssetQuery,
     NetworkAssetUpdate,
 )
-from app.services.import_session import drop, put
+from app.services.import_session import drop, get, put
+from app.services.department import resolve_department_id
 from app.services.operation_log import log_operation
 from app.utils.excel import cell_to_text, read_rows
 from app.utils.mac import normalize_mac
@@ -160,6 +161,9 @@ def get_asset_or_404(db: Session, asset_id: int) -> NetworkAsset:
 
 def create_asset(db: Session, data: NetworkAssetCreate, user_id: int, ip: str | None) -> NetworkAsset:
     fields = data.model_dump()
+    fields["department_id"] = resolve_department_id(
+        db, fields.get("department_id"), fields.pop("department_name", None)
+    )
     if fields.get("mac_address"):
         fields["mac_address"] = normalize_mac(fields["mac_address"])
         dup = db.query(NetworkAsset).filter(
@@ -180,6 +184,11 @@ def update_asset(db: Session, asset_id: int, data: NetworkAssetUpdate, user_id: 
     a = get_asset_or_404(db, asset_id)
     changes = data.model_dump(exclude_unset=True)
     reason = changes.pop("change_reason")
+    # 自由填写部门：按名查找或自动创建后转 department_id
+    if "department_name" in changes:
+        changes["department_id"] = resolve_department_id(
+            db, changes.get("department_id"), changes.pop("department_name")
+        )
     # MAC conflict check (MAC is expected unique)
     new_mac = changes.get("mac_address")
     if new_mac:

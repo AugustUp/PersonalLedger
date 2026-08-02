@@ -6,6 +6,8 @@ import { meetingApi, download } from '@/api'
 import { fmtDateTime } from '@/utils/format'
 import { STATUS_LABELS } from '@/api/types'
 import StatusTag from '@/components/StatusTag.vue'
+import PageHeader from '@/components/PageHeader.vue'
+import EmptyHint from '@/components/EmptyHint.vue'
 
 const router = useRouter()
 const loading = ref(false)
@@ -90,6 +92,14 @@ onMounted(load)
 
 <template>
   <div>
+    <PageHeader title="会议调试台账" description="登记会议调试任务、设备与处理过程，跟踪保障状态" icon="Calendar">
+      <el-button v-permission="'meeting:create'" type="primary" @click="router.push('/meetings/new')">
+        <el-icon style="margin-right: 4px"><Plus /></el-icon>新增会议
+      </el-button>
+      <el-button v-permission="'meeting:export'" @click="onExport">
+        <el-icon style="margin-right: 4px"><Download /></el-icon>导出
+      </el-button>
+    </PageHeader>
     <el-card shadow="never" class="filter-card">
       <el-form :inline="true" @submit.prevent>
         <el-form-item label="关键词">
@@ -135,13 +145,7 @@ onMounted(load)
 
     <el-card shadow="never" style="margin-top: 14px">
       <div class="toolbar">
-        <div>
-          <el-button type="primary" v-permission="'meeting:create'" @click="router.push('/meetings/new')">
-            新增会议
-          </el-button>
-          <el-button v-permission="'meeting:export'" @click="onExport">导出</el-button>
-        </div>
-        <span class="total-text">共 {{ total }} 条</span>
+        <span class="total-text">共 {{ total }} 条记录</span>
       </div>
 
       <el-table :data="rows" v-loading="loading" border stripe>
@@ -167,6 +171,13 @@ onMounted(load)
             <el-button link type="danger" @click="onDelete(row)">删除</el-button>
           </template>
         </el-table-column>
+        <template #empty>
+          <EmptyHint text="暂无会议调试记录">
+            <el-button v-if="total === 0" size="small" type="primary" plain @click="router.push('/meetings/new')">
+              新增第一条记录
+            </el-button>
+          </EmptyHint>
+        </template>
       </el-table>
 
       <el-pagination

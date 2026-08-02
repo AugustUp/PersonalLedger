@@ -4,7 +4,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, FormInstance, FormRules } from 'element-plus'
 import { accountBatchApi } from '@/api'
 import { STATUS_LABELS } from '@/api/types'
+import { useConfigStore } from '@/stores/config'
+import PageHeader from '@/components/PageHeader.vue'
 
+const config = useConfigStore()
+const fl = config.fieldLabel
 const route = useRoute()
 const router = useRouter()
 const formRef = ref<FormInstance>()
@@ -81,33 +85,40 @@ async function onSubmit() {
 </script>
 
 <template>
-  <el-card v-loading="loading" shadow="never">
-    <template #header><span>{{ id ? '编辑账号批次' : '新增账号批次' }}</span></template>
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="120px" style="max-width: 640px">
-      <el-form-item label="批次名称" prop="batch_name">
+  <div>
+    <PageHeader
+      :title="id ? '编辑账号批次' : '新增账号批次'"
+      description="创建批次后进入详情页导入账号名单"
+      icon="Files"
+    >
+      <el-button @click="router.push(id ? `/account-batches/${id}` : '/account-batches')">返回列表</el-button>
+    </PageHeader>
+    <el-card v-loading="loading" shadow="never">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="120px" style="max-width: 640px">
+      <el-form-item :label="fl('account_batches', 'batch_name')" prop="batch_name">
         <el-input v-model="form.batch_name" />
       </el-form-item>
-      <el-form-item label="账号类型">
+      <el-form-item :label="fl('account_batches', 'account_type')">
         <el-input v-model="form.account_type" placeholder="如 邮箱 / 钉钉 / VPN" />
       </el-form-item>
-      <el-form-item label="申请部门">
+      <el-form-item :label="fl('account_batches', 'applicant_department')">
         <el-input v-model="form.applicant_department" />
       </el-form-item>
-      <el-form-item label="申请人">
+      <el-form-item :label="fl('account_batches', 'applicant')">
         <el-input v-model="form.applicant" />
       </el-form-item>
-      <el-form-item label="申请日期">
+      <el-form-item :label="fl('account_batches', 'application_date')">
         <el-date-picker v-model="form.application_date" type="date" value-format="YYYY-MM-DD" />
       </el-form-item>
-      <el-form-item label="经办人">
+      <el-form-item :label="fl('account_batches', 'handler')">
         <el-input v-model="form.handler" />
       </el-form-item>
-      <el-form-item v-if="id" label="状态">
+      <el-form-item v-if="id" :label="fl('account_batches', 'status')">
         <el-select v-model="form.status" style="width: 200px">
           <el-option v-for="o in statusOptions" :key="o.value" :label="o.label" :value="o.value" />
         </el-select>
       </el-form-item>
-      <el-form-item label="备注">
+      <el-form-item :label="fl('account_batches', 'remark')">
         <el-input v-model="form.remark" type="textarea" :rows="2" />
       </el-form-item>
       <el-form-item>
@@ -115,5 +126,6 @@ async function onSubmit() {
         <el-button @click="router.push(id ? `/account-batches/${id}` : '/account-batches')">取消</el-button>
       </el-form-item>
     </el-form>
-  </el-card>
+    </el-card>
+  </div>
 </template>

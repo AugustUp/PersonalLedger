@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.exceptions import not_found
 from app.models.maintenance import MaintenanceRecord
 from app.schemas.maintenance import MaintenanceCreate, MaintenanceQuery, MaintenanceUpdate
+from app.services.department import resolve_department_id
 from app.services.operation_log import log_operation
 from app.utils.number import commit_with_no
 from app.utils.query import apply_sort, paginate
@@ -113,7 +114,11 @@ def _to_persist(payload: dict) -> dict:
 
 
 def create_maintenance(db: Session, data: MaintenanceCreate, user_id: int, ip: str | None) -> MaintenanceRecord:
-    m = MaintenanceRecord(**_to_persist(data.model_dump()))
+    fields = _to_persist(data.model_dump())
+    fields["department_id"] = resolve_department_id(
+        db, fields.get("department_id"), fields.pop("department_name", None)
+    )
+    m = MaintenanceRecord(**fields)
     db.add(m)
     commit_with_no(db, m, MaintenanceRecord, "record_no", "OPS")
     log_operation(db, user_id=user_id, module="maintenance", action="create",
@@ -124,7 +129,12 @@ def create_maintenance(db: Session, data: MaintenanceCreate, user_id: int, ip: s
 
 def update_maintenance(db: Session, rec_id: int, data: MaintenanceUpdate, user_id: int, ip: str | None) -> MaintenanceRecord:
     m = get_maintenance_or_404(db, rec_id)
-    for field, value in _to_persist(data.model_dump(exclude_unset=True)).items():
+    fields = _to_persist(data.model_dump(exclude_unset=True))
+    if "department_name" in fields:
+        fields["department_id"] = resolve_department_id(
+            db, fields.get("department_id"), fields.pop("department_name")
+        )
+    for field, value in fields.items():
         setattr(m, field, value)
     db.commit()
     db.refresh(m)

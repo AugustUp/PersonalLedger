@@ -6,6 +6,7 @@ import { accountBatchApi, download } from '@/api'
 import { fmt, fmtDate, fmtDateTime } from '@/utils/format'
 import { STATUS_LABELS } from '@/api/types'
 import StatusTag from '@/components/StatusTag.vue'
+import PageHeader from '@/components/PageHeader.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -98,35 +99,32 @@ onMounted(async () => {
 
 <template>
   <div v-loading="loading">
+    <PageHeader
+      :title="detail?.batch_name || '账号批次详情'"
+      :description="detail ? `编号 ${detail.batch_no}` : ''"
+      icon="Files"
+    >
+      <el-button v-permission="'account_batch:update'" type="primary" @click="router.push(`/account-batches/${id}/edit`)">
+        编辑批次
+      </el-button>
+      <el-button v-permission="'account_batch:import'" @click="openImport">导入名单</el-button>
+      <el-dropdown v-permission="'account_batch:export'" @command="(c: string) => onExport(c)">
+        <el-button>
+          导出<el-icon><ArrowDown /></el-icon>
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="all">导出全部</el-dropdown-item>
+            <el-dropdown-item command="success">成功名单</el-dropdown-item>
+            <el-dropdown-item command="failed">失败名单</el-dropdown-item>
+            <el-dropdown-item command="pending">待处理名单</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+      <el-button @click="router.push('/account-batches')">返回列表</el-button>
+    </PageHeader>
     <el-card v-if="detail" shadow="never">
-      <template #header>
-        <div class="detail-head">
-          <span>{{ detail.batch_name }}</span>
-          <div>
-            <el-button v-permission="'account_batch:update'" type="primary" @click="router.push(`/account-batches/${id}/edit`)">
-              编辑批次
-            </el-button>
-            <el-button v-permission="'account_batch:import'" @click="openImport">导入名单</el-button>
-            <el-dropdown v-permission="'account_batch:export'" @command="(c: string) => onExport(c)">
-              <el-button>
-                导出<el-icon><ArrowDown /></el-icon>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="all">导出全部</el-dropdown-item>
-                  <el-dropdown-item command="success">成功名单</el-dropdown-item>
-                  <el-dropdown-item command="failed">失败名单</el-dropdown-item>
-                  <el-dropdown-item command="pending">待处理名单</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-            <el-button @click="router.push('/account-batches')">返回</el-button>
-          </div>
-        </div>
-      </template>
-
       <el-descriptions :column="3" border>
-        <el-descriptions-item label="编号">{{ fmt(detail.batch_no) }}</el-descriptions-item>
         <el-descriptions-item label="状态"><StatusTag module="account_batch" :status="detail.status" /></el-descriptions-item>
         <el-descriptions-item label="账号类型">{{ fmt(detail.account_type) }}</el-descriptions-item>
         <el-descriptions-item label="申请部门">{{ fmt(detail.applicant_department) }}</el-descriptions-item>
@@ -210,15 +208,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.detail-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 600;
-  font-size: 16px;
-  flex-wrap: wrap;
-  gap: 8px;
-}
 .pager {
   margin-top: 14px;
   justify-content: flex-end;

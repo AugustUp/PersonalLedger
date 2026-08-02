@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { Search, Fold, Expand } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
+import { useConfigStore } from '@/stores/config'
 import { hasPerm } from '@/utils/permission'
-import { categoryGroupOf } from '@/api/types'
 
 const user = useUserStore()
+const config = useConfigStore()
 const route = useRoute()
 const router = useRouter()
 const collapsed = ref(false)
@@ -20,34 +21,36 @@ interface MenuItem {
   permission?: string
 }
 
-const navGroups: { title: string; items: MenuItem[] }[] = [
-  {
-    title: '工作台',
-    items: [
-      { index: '/dashboard', title: '工作台首页', icon: 'Odometer' },
-    ],
-  },
-  {
-    title: '业务台账',
-    items: [
-      { index: '/meetings', title: '会议调试台账', icon: 'Calendar', permission: 'meeting:view' },
-      { index: '/network-assets', title: 'IP/MAC 台账', icon: 'Connection', permission: 'network_asset:view' },
-      { index: '/account-batches', title: '批量账号台账', icon: 'Files', permission: 'account_batch:view' },
-      { index: 'maintenance:账号类', title: '账号类维护', icon: 'User', permission: 'maintenance:view' },
-      { index: 'maintenance:终端类', title: '终端类维护', icon: 'Monitor', permission: 'maintenance:view' },
-      { index: 'maintenance:网络类', title: '网络类维护', icon: 'Connection', permission: 'maintenance:view' },
-      { index: 'maintenance:无线类', title: '无线类维护', icon: 'Position', permission: 'maintenance:view' },
-    ],
-  },
-  {
-    title: '系统管理',
-    items: [
-      { index: '/system/users', title: '用户管理', icon: 'User', permission: 'system:user_manage' },
-      { index: '/system/departments', title: '部门管理', icon: 'OfficeBuilding', permission: 'system:department_manage' },
-      { index: '/system/logs', title: '操作日志', icon: 'Document', permission: 'system:log_view' },
-    ],
-  },
-]
+const navGroups = computed<{ title: string; items: MenuItem[] }[]>(() => {
+  const biz: MenuItem[] = [
+    { index: '/meetings', title: config.ledgerName('meetings'), icon: 'Calendar', permission: 'meeting:view' },
+    { index: '/network-assets', title: config.ledgerName('network_assets'), icon: 'Connection', permission: 'network_asset:view' },
+    { index: '/account-batches', title: config.ledgerName('account_batches'), icon: 'Files', permission: 'account_batch:view' },
+  ]
+  const groupIcons = ['User', 'Monitor', 'Connection', 'Position']
+  config.categoryGroups().forEach((g, i) => {
+    biz.push({
+      index: `maintenance:${g.label}`,
+      title: `${g.label}维护`,
+      icon: groupIcons[i % groupIcons.length],
+      permission: 'maintenance:view',
+    })
+  })
+  return [
+    { title: '工作台', items: [{ index: '/dashboard', title: '工作台首页', icon: 'Odometer' }] },
+    { title: '业务台账', items: biz },
+    {
+      title: '系统管理',
+      items: [
+        { index: '/system/users', title: '用户管理', icon: 'User', permission: 'system:user_manage' },
+        { index: '/system/departments', title: '部门管理', icon: 'OfficeBuilding', permission: 'system:department_manage' },
+        { index: '/system/logs', title: '操作日志', icon: 'Document', permission: 'system:log_view' },
+        { index: '/system/backup', title: '数据备份', icon: 'FolderOpened', permission: 'system:backup_manage' },
+        { index: '/system/customization', title: '台账定制', icon: 'Setting', permission: 'system:config_manage' },
+      ],
+    },
+  ]
+})
 
 function visibleOf(it: MenuItem): MenuItem | null {
   if (it.permission && !hasPerm(it.permission)) return null
@@ -57,7 +60,7 @@ function visibleOf(it: MenuItem): MenuItem | null {
 }
 
 const groups = computed(() =>
-  navGroups
+  navGroups.value
     .map((g) => {
       const items = g.items.map(visibleOf).filter((x): x is MenuItem => x !== null)
       return items.length ? { ...g, items } : null
@@ -71,7 +74,7 @@ const activeIndex = computed(() => {
   if (p.startsWith('/network-assets')) return '/network-assets'
   if (p.startsWith('/account-batches')) return '/account-batches'
   if (p.startsWith('/maintenance')) {
-    const g = (typeof route.query.group === 'string' && route.query.group) || categoryGroupOf(route.query.category as string)
+    const g = (typeof route.query.group === 'string' && route.query.group) || config.categoryGroupOf(route.query.category as string)
     return `maintenance:${g}`
   }
   if (p.startsWith('/system')) return p
@@ -102,6 +105,32 @@ const roleLabel: Record<string, string> = {
   manager: '运维管理员',
   operator: '普通运维',
 }
+
+const avatarText = computed(() => {
+  const name = user.realName || user.me?.username || ''
+  return name ? name.slice(0, 1).toUpperCase() : 'U'
+})
+
+// 顶栏面包屑（分组 / 当前页面），与页面内大标题形成层级、避免重复
+const breadcrumbs = computed(() => {
+  const p = route.path
+  const t = (route.meta.title as string) || ''
+  if (p === '/dashboard') return ['工作台', t || '首页']
+  if (p.startsWith('/meetings')) return ['业务台账', config.ledgerName('meetings')]
+  if (p.startsWith('/network-assets')) return ['业务台账', config.ledgerName('network_assets')]
+  if (p.startsWith('/account-batches')) return ['业务台账', config.ledgerName('account_batches')]
+  if (p.startsWith('/maintenance')) {
+    const g = typeof route.query.group === 'string' ? route.query.group : ''
+    const cat = typeof route.query.category === 'string' ? route.query.category : ''
+    return ['业务台账', g ? `${g}维护` : cat || config.ledgerName('maintenance')]
+  }
+  if (p.startsWith('/system')) return ['系统管理', t]
+  return [t]
+})
+
+onMounted(() => {
+  config.fetch()
+})
 </script>
 
 <template>
@@ -135,19 +164,24 @@ const roleLabel: Record<string, string> = {
       <el-header class="app-header">
         <div class="header-left">
           <el-button text :icon="collapsed ? Expand : Fold" @click="collapsed = !collapsed" />
-          <span class="header-title">{{ (route.meta.title as string) || '' }}</span>
+          <el-breadcrumb separator="/" class="header-breadcrumb">
+            <el-breadcrumb-item v-for="b in breadcrumbs" :key="b">{{ b }}</el-breadcrumb-item>
+          </el-breadcrumb>
         </div>
         <div class="header-right">
-          <span class="user-meta">
-            {{ user.realName || user.me?.username }}
+          <div class="user-meta">
+            <el-avatar :size="30" class="user-avatar">{{ avatarText }}</el-avatar>
+            <span class="user-name">{{ user.realName || user.me?.username }}</span>
             <el-tag size="small" type="info" effect="plain">{{ roleLabel[user.role] || user.role }}</el-tag>
-          </span>
+          </div>
           <el-button text type="primary" @click="onLogout">退出登录</el-button>
         </div>
       </el-header>
       <el-main class="app-main">
         <router-view v-slot="{ Component }">
-          <component :is="Component" />
+          <transition name="fade-slide" mode="out-in">
+            <component :is="Component" />
+          </transition>
         </router-view>
       </el-main>
     </el-container>
@@ -180,7 +214,7 @@ const roleLabel: Record<string, string> = {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #409eff;
+  background: var(--el-color-primary);
 }
 .menu-search {
   padding: 0 12px 8px;
@@ -201,7 +235,7 @@ const roleLabel: Record<string, string> = {
   color: #c0c4cc;
 }
 .app-menu :deep(.el-menu-item.is-active) {
-  background: #409eff;
+  background: var(--el-color-primary);
   color: #fff;
 }
 .app-header {
@@ -210,14 +244,22 @@ const roleLabel: Record<string, string> = {
   justify-content: space-between;
   background: #fff;
   border-bottom: 1px solid #ebeef5;
+  height: 56px;
+  padding: 0 18px;
 }
 .header-left {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-.header-title {
-  font-size: 18px;
+.header-breadcrumb {
+  font-size: 14px;
+}
+.header-breadcrumb :deep(.el-breadcrumb__inner) {
+  color: #606266;
+}
+.header-breadcrumb :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
+  color: #303133;
   font-weight: 600;
 }
 .header-right {
@@ -230,6 +272,15 @@ const roleLabel: Record<string, string> = {
   align-items: center;
   gap: 8px;
   color: #606266;
+}
+.user-avatar {
+  background: var(--el-color-primary-light-5);
+  color: #fff;
+  font-weight: 600;
+}
+.user-name {
+  font-size: 14px;
+  color: #303133;
 }
 .app-main {
   background: #f5f7fa;

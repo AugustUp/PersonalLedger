@@ -38,6 +38,7 @@ class MaintenanceBase(BaseModel):
     related_system: str | None = Field(None, max_length=100)
     requester: str | None = Field(None, max_length=100)
     department_id: int | None = None
+    department_name: str | None = Field(None, max_length=100, description="自由填写部门名：传了则按名查找或自动创建")
     contact_phone: str | None = Field(None, max_length=50)
     location: str | None = Field(None, max_length=200)
     problem_description: str | None = None
@@ -62,6 +63,7 @@ class MaintenanceUpdate(BaseModel):
     related_system: str | None = Field(None, max_length=100)
     requester: str | None = Field(None, max_length=100)
     department_id: int | None = None
+    department_name: str | None = Field(None, max_length=100, description="自由填写部门名：传了则按名查找或自动创建")
     contact_phone: str | None = Field(None, max_length=50)
     location: str | None = Field(None, max_length=200)
     problem_description: str | None = None

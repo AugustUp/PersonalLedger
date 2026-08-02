@@ -10,6 +10,7 @@ from app.services.user import (
     create_user,
     list_users,
     reset_password,
+    serialize_user,
     update_user,
 )
 
@@ -39,7 +40,7 @@ def create_user_endpoint(
 ):
     u = create_user(db, payload, operator.id)
     db.commit()
-    return ok(UserOut.model_validate(u).model_dump(), message="创建成功")
+    return ok(serialize_user(db, u), message="创建成功")
 
 
 @router.patch("/{user_id}", response_model=dict,
@@ -47,7 +48,7 @@ def create_user_endpoint(
 def update_user_endpoint(user_id: int, payload: UserUpdate, db: Session = Depends(get_db)):
     u = update_user(db, user_id, payload)
     db.commit()
-    return ok(UserOut.model_validate(u).model_dump(), message="更新成功")
+    return ok(serialize_user(db, u), message="更新成功")
 
 
 @router.post("/{user_id}/reset-password", response_model=dict,

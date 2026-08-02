@@ -1,0 +1,75 @@
+/* ============================================================
+   Global theme overrides (Element Plus light professional theme)
+   ============================================================ */
+:root {
+  /* Primary: deep professional blue */
+  --el-color-primary: #2563eb;
+  --el-color-primary-light-3: #5b85f0;
+  --el-color-primary-light-5: #92b1f5;
+  --el-color-primary-light-7: #c9d8fa;
+  --el-color-primary-light-8: #dce7fc;
+  --el-color-primary-light-9: #eef3fe;
+  --el-color-primary-dark-2: #1e4fbc;
+
+  --el-border-radius-base: 6px;
+  --el-border-radius-small: 4px;
+  --el-border-radius-round: 20px;
+  --el-box-shadow-light: 0 2px 12px 0 rgba(31, 45, 61, 0.08);
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: #303133;
+  background: #f5f7fa;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Slim, subtle scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #c6ccd4;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a8b0ba;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Route transition (used by MainLayout router-view) */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/* Global card consistency */
+.el-card {
+  border-radius: 8px;
+}
+
+/* Slightly softer page background for main content cards */
+.app-main .el-card {
+  background: #fff;
+}

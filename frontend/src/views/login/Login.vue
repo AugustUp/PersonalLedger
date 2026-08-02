@@ -38,9 +38,13 @@ async function onSubmit() {
 
 <template>
   <div class="login-page">
+    <div class="login-bg decor-1" />
+    <div class="login-bg decor-2" />
     <el-card class="login-card" shadow="always">
       <div class="login-head">
-        <div class="login-logo" />
+        <div class="login-logo">
+          <el-icon><Tools /></el-icon>
+        </div>
         <h2>运维智能台账系统</h2>
         <p class="login-sub">FastAPI · SQLite · Vue 3</p>
       </div>
@@ -68,26 +72,55 @@ async function onSubmit() {
 
 <style scoped>
 .login-page {
+  position: relative;
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1f2d3d 0%, #2d4a6b 100%);
+  background: linear-gradient(135deg, #1f2d3d 0%, #25406b 55%, #2563eb 130%);
+  overflow: hidden;
+}
+.login-bg {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(2px);
+  opacity: 0.35;
+  pointer-events: none;
+}
+.decor-1 {
+  width: 420px;
+  height: 420px;
+  top: -120px;
+  left: -80px;
+  background: radial-gradient(circle at 30% 30%, #4f8df9, transparent 70%);
+}
+.decor-2 {
+  width: 520px;
+  height: 520px;
+  bottom: -180px;
+  right: -120px;
+  background: radial-gradient(circle at 60% 60%, #38bdf8, transparent 70%);
 }
 .login-card {
   width: 380px;
-  border-radius: 12px;
+  border-radius: 14px;
+  z-index: 1;
 }
 .login-head {
   text-align: center;
   margin-bottom: 18px;
 }
 .login-logo {
-  width: 46px;
-  height: 46px;
-  margin: 0 auto 10px;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
   border-radius: 12px;
-  background: #409eff;
+  background: linear-gradient(135deg, #2563eb, #38bdf8);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
 }
 .login-head h2 {
   margin: 0;
