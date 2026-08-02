@@ -22,6 +22,12 @@ const routes = [
         meta: { title: '首页' },
       },
       {
+        path: 'reports',
+        name: 'reports',
+        component: () => import('@/views/reports/ReportCenter.vue'),
+        meta: { title: '汇报中心' },
+      },
+      {
         path: 'meetings',
         name: 'meetings',
         component: () => import('@/views/meetings/MeetingList.vue'),

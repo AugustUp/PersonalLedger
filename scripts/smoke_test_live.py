@@ -276,6 +276,19 @@ def main():
               json={"maintenance_categories": [{"label": "A", "options": ["X", "X"]}]})
     check("分类重名被拒(400)", r.status_code == 400, f"status={r.status_code}")
 
+    # ---- 汇报中心（四台账汇总）----
+    r = c.get("/api/v1/reports/summary", headers=h)
+    rep = r.json().get("data", {})
+    check("GET /reports/summary 四台账汇总",
+          r.status_code == 200 and rep.get("maintenance", {}).get("total", 0) >= 1
+          and rep.get("meetings", {}).get("total", 0) >= 1, r.text)
+    r = c.get("/api/v1/reports/summary", params={"start": "2000-01-01", "end": "2000-01-31"}, headers=h)
+    rep2 = r.json().get("data", {})
+    check("GET /reports/summary 时间过滤(旧区间为空)",
+          r.status_code == 200 and rep2.get("maintenance", {}).get("total") == 0, r.text)
+    r = c.get("/api/v1/reports/summary")
+    check("GET /reports/summary 未登录 401", r.status_code in (401, 403), f"status={r.status_code}")
+
     # ---- 登录失败锁定（连续 5 次失败后第 6 次应 429）----
     lock_codes = []
     for _ in range(6):

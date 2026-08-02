@@ -205,6 +205,34 @@ export const customizationApi = {
 }
 
 // ---------------------------------------------------------------------------
+// Report center (personal work log / report material)
+// ---------------------------------------------------------------------------
+export interface ReportItem {
+  record_no: string
+  title: string
+  status: string
+  occurred_at: string | null
+  summary: string | null
+}
+export interface ReportModule {
+  total: number
+  items: ReportItem[]
+}
+export interface ReportSummary {
+  start: string
+  end: string
+  meetings: ReportModule
+  maintenance: ReportModule
+  network_assets: ReportModule
+  account_batches: ReportModule
+}
+
+export const reportApi = {
+  summary: (start?: string, end?: string) =>
+    get<ReportSummary>('/reports/summary', { start, end }),
+}
+
+// ---------------------------------------------------------------------------
 // Export download (binary, needs Authorization header)
 // ---------------------------------------------------------------------------
 export async function download(url: string, defaultName = 'download.xlsx') {

@@ -3,7 +3,8 @@ from fastapi import APIRouter
 
 from app.api.v1.routers import (
     account_batches, attachments, auth, backup, customization, dashboard,
-    departments, maintenance, meetings, network_assets, operation_logs, users,
+    departments, maintenance, meetings, network_assets, operation_logs,
+    reports, users,
 )
 
 api_router = APIRouter()
@@ -19,3 +20,4 @@ api_router.include_router(dashboard.router)
 api_router.include_router(operation_logs.router)
 api_router.include_router(backup.router)
 api_router.include_router(customization.router)
+api_router.include_router(reports.router)

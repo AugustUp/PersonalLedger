@@ -37,7 +37,13 @@ const navGroups = computed<{ title: string; items: MenuItem[] }[]>(() => {
     })
   })
   return [
-    { title: '工作台', items: [{ index: '/dashboard', title: '工作台首页', icon: 'Odometer' }] },
+    {
+      title: '工作台',
+      items: [
+        { index: '/dashboard', title: '工作台首页', icon: 'Odometer' },
+        { index: '/reports', title: '汇报中心', icon: 'Document' },
+      ],
+    },
     { title: '业务台账', items: biz },
     {
       title: '系统管理',
