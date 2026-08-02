@@ -217,6 +217,8 @@ def main():
     dash = r.json().get("data", {})
     check("GET /dashboard/summary",
           r.status_code == 200 and dash.get("meeting_total", 0) >= 1 and "maintenance_by_category" in dash, r.text)
+    check("dashboard 今日新增 + 待办清单字段",
+          "today_maintenance" in dash and "todo_maintenance" in dash and "todo_meetings" in dash, r.text)
 
     # ---- operation logs ----
     r = c.get("/api/v1/operation-logs", headers=h)

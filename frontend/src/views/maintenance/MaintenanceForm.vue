@@ -120,6 +120,28 @@ async function onSubmit() {
     }
   })
 }
+
+// 保存并继续：新增模式下批量录入不停顿
+async function onSaveAndContinue() {
+  if (id || !formRef.value) return
+  await formRef.value.validate(async (valid) => {
+    if (!valid) return
+    submitting.value = true
+    try {
+      await maintenanceApi.create(toPayload())
+      ElMessage.success('已保存，继续登记下一条')
+      Object.assign(form, {
+        category: form.category, // 保留分类便于连续录入同类事项
+        related_system: '', requester: '', department_id: null, contact_phone: '',
+        location: '', problem_description: '', handling_process: '', fault_cause: '',
+        result: '', status: 'pending', handler: '', started_at: '', finished_at: '', remark: '',
+      })
+      formRef.value?.clearValidate()
+    } finally {
+      submitting.value = false
+    }
+  })
+}
 </script>
 
 <template>
@@ -217,6 +239,7 @@ async function onSubmit() {
         <el-input v-model="form.remark" type="textarea" :rows="2" />
       </el-form-item>
       <el-form-item>
+        <el-button v-if="!id" type="primary" plain :loading="submitting" @click="onSaveAndContinue">保存并继续</el-button>
         <el-button type="primary" :loading="submitting" @click="onSubmit">保存</el-button>
         <el-button @click="router.push(`/maintenance${groupQuery}`)">取消</el-button>
       </el-form-item>

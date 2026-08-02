@@ -82,6 +82,6 @@ def delete_department(db: Session, dept_id: int) -> None:
         raise conflict("该部门下存在用户，无法删除")
     if db.query(NetworkAsset).filter(NetworkAsset.department_id == d.id).first():
         raise conflict("该部门被 IP/MAC 台账引用，无法删除")
-    if db.query(MaintenanceRecord).filter(MaintenanceRecord.department_id == d.id).first():
+    if db.query(MaintenanceRecord).filter(MaintenanceRecord.department_id == d.id, MaintenanceRecord.is_deleted.is_(False)).first():
         raise conflict("该部门被维护台账引用，无法删除")
     db.delete(d)

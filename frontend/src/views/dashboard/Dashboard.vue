@@ -1,15 +1,19 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { dashboardApi } from '@/api'
-import { fmtDateTime } from '@/utils/format'
+import { ElMessage } from 'element-plus'
+import { dashboardApi, maintenanceApi, meetingApi } from '@/api'
 import { useConfigStore } from '@/stores/config'
+import { STATUS_LABELS } from '@/api/types'
+import StatusTag from '@/components/StatusTag.vue'
+import QuickAddDialog from '@/components/QuickAddDialog.vue'
 import type { DashboardSummary } from '@/api/types'
 
 const router = useRouter()
 const config = useConfigStore()
 const loading = ref(false)
 const data = ref<DashboardSummary | null>(null)
+const quickVisible = ref(false)
 
 const moduleCards = ref([
   { key: 'meetings', titleKey: 'meetings', icon: 'Calendar', color: 'linear-gradient(135deg,#6366f1,#8b5cf6)', total: 0, pending: 0, to: '/meetings' },
@@ -24,6 +28,16 @@ function catStat(c: string) {
   const m = data.value?.maintenance_by_category || {}
   return m[c] || { total: 0, pending: 0 }
 }
+
+const todayCards = computed(() => {
+  const d = data.value
+  return [
+    { label: '今日维护', value: d?.today_maintenance ?? 0, to: '/maintenance' },
+    { label: '今日会议', value: d?.today_meetings ?? 0, to: '/meetings' },
+    { label: '今日 IP/MAC', value: d?.today_assets ?? 0, to: '/network-assets' },
+    { label: '今日批次', value: d?.today_batches ?? 0, to: '/account-batches' },
+  ]
+})
 
 async function load() {
   loading.value = true
@@ -43,6 +57,30 @@ async function load() {
   }
 }
 
+// 待办行内状态流转（维护）
+const MAINT_TRANSITIONS: Record<string, string[]> = {
+  pending: ['processing', 'resolved'],
+  processing: ['resolved'],
+}
+async function onTodoStatus(row: any, status: string) {
+  try {
+    await maintenanceApi.update(row.id, { status })
+    ElMessage.success(`已更新为「${STATUS_LABELS.maintenance[status] || status}」`)
+    load()
+  } catch {
+    /* interceptor */
+  }
+}
+async function onMeetingStatus(row: any, status: string) {
+  try {
+    await meetingApi.update(row.id, { status })
+    ElMessage.success(`已更新为「${STATUS_LABELS.meeting[status] || status}」`)
+    load()
+  } catch {
+    /* interceptor */
+  }
+}
+
 onMounted(() => {
   config.fetch()
   load()
@@ -51,23 +89,83 @@ onMounted(() => {
 
 <template>
   <div v-loading="loading">
+    <!-- 快速登记 -->
     <el-card shadow="never" class="quick-card">
       <div class="quick-bar">
-        <span class="quick-label">快捷操作</span>
-        <el-button v-permission="'meeting:create'" @click="router.push('/meetings/new')">
-          <el-icon style="margin-right: 4px"><Plus /></el-icon>新增会议调试
+        <el-button type="primary" size="large" class="quick-add-btn" @click="quickVisible = true">
+          <el-icon style="margin-right: 6px"><Plus /></el-icon>快速登记
         </el-button>
-        <el-button v-permission="'maintenance:create'" type="primary" @click="router.push('/maintenance/new')">
-          <el-icon style="margin-right: 4px"><Plus /></el-icon>新增维护记录
-        </el-button>
-        <el-button v-permission="'network_asset:import'" @click="router.push('/network-assets/import')">
-          <el-icon style="margin-right: 4px"><Upload /></el-icon>导入 IP/MAC
-        </el-button>
-        <el-button v-permission="'account_batch:create'" @click="router.push('/account-batches/new')">
-          <el-icon style="margin-right: 4px"><Plus /></el-icon>新增账号批次
-        </el-button>
+        <span class="quick-hint">记一条留底：选类型 → 填关键信息 → 保存，可连续录入</span>
+        <el-button v-permission="'network_asset:import'" text @click="router.push('/network-assets/import')">导入 IP/MAC</el-button>
+        <el-button v-permission="'account_batch:create'" text @click="router.push('/account-batches/new')">新增账号批次</el-button>
       </div>
     </el-card>
+
+    <!-- 今日新增 -->
+    <el-row :gutter="12" style="margin-top: 12px">
+      <el-col v-for="t in todayCards" :key="t.label" :xs="12" :sm="6">
+        <div class="today-chip" @click="router.push(t.to)">
+          <span class="today-num">{{ t.value }}</span>
+          <span class="today-label">{{ t.label }}</span>
+        </div>
+      </el-col>
+    </el-row>
+
+    <!-- 待办清单 -->
+    <el-row :gutter="16" style="margin-top: 16px">
+      <el-col :md="14">
+        <el-card shadow="never" header="待办 · 维护事项（待处理/处理中）" class="todo-card">
+          <el-table :data="data?.todo_maintenance || []" size="small">
+            <el-table-column prop="record_no" label="编号" width="140" />
+            <el-table-column prop="category" label="分类" width="110" />
+            <el-table-column prop="requester" label="报修人" width="90" />
+            <el-table-column prop="location" label="地点" min-width="90" show-overflow-tooltip />
+            <el-table-column label="状态" width="95">
+              <template #default="{ row }"><StatusTag module="maintenance" :status="row.status" /></template>
+            </el-table-column>
+            <el-table-column label="操作" width="120" fixed="right">
+              <template #default="{ row }">
+                <el-dropdown v-if="MAINT_TRANSITIONS[row.status]?.length" trigger="click" @command="(s: string) => onTodoStatus(row, s)">
+                  <el-button link type="primary">流转<el-icon style="margin-left: 2px"><ArrowDown /></el-icon></el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item v-for="s in MAINT_TRANSITIONS[row.status]" :key="s" :command="s">
+                        → {{ STATUS_LABELS.maintenance[s] || s }}
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+                <el-button link type="primary" @click="router.push(`/maintenance/${row.id}`)">详情</el-button>
+              </template>
+            </el-table-column>
+            <template #empty><span class="todo-empty">暂无待办，今天都处理完啦 🎉</span></template>
+          </el-table>
+        </el-card>
+      </el-col>
+      <el-col :md="10">
+        <el-card shadow="never" header="待办 · 会议调试（待调试）" class="todo-card">
+          <el-table :data="data?.todo_meetings || []" size="small">
+            <el-table-column prop="record_no" label="编号" width="140" />
+            <el-table-column prop="meeting_name" label="名称" min-width="110" show-overflow-tooltip />
+            <el-table-column label="操作" width="120" fixed="right">
+              <template #default="{ row }">
+                <el-dropdown v-if="row.status === 'pending'" trigger="click" @command="(s: string) => onMeetingStatus(row, s)">
+                  <el-button link type="primary">流转<el-icon style="margin-left: 2px"><ArrowDown /></el-icon></el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="debugged">→ 已调试</el-dropdown-item>
+                      <el-dropdown-item command="completed">→ 已完成</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+                <el-button link type="primary" @click="router.push(`/meetings/${row.id}`)">详情</el-button>
+              </template>
+            </el-table-column>
+            <template #empty><span class="todo-empty">暂无待调试会议</span></template>
+          </el-table>
+        </el-card>
+      </el-col>
+    </el-row>
 
     <h3 class="section-title">业务台账总览</h3>
     <el-row :gutter="16">
@@ -109,55 +207,66 @@ onMounted(() => {
       </div>
     </el-card>
 
-    <el-row :gutter="16" style="margin-top: 16px">
-      <el-col :md="12">
-        <el-card shadow="never" header="最近维护事项">
-          <el-table :data="data?.recent_maintenance || []" size="small" empty-text="暂无数据">
-            <el-table-column prop="record_no" label="编号" width="140" />
-            <el-table-column prop="category" label="类别" width="100" />
-            <el-table-column prop="status" label="状态" width="90" />
-            <el-table-column label="更新时间">
-              <template #default="{ row }">{{ fmtDateTime(row.updated_at) }}</template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-      </el-col>
-      <el-col :md="12">
-        <el-card shadow="never" header="最近会议调试">
-          <el-table :data="data?.recent_meetings || []" size="small" empty-text="暂无数据">
-            <el-table-column prop="record_no" label="编号" width="140" />
-            <el-table-column prop="meeting_name" label="名称" min-width="140" />
-            <el-table-column prop="status" label="状态" width="90" />
-            <el-table-column label="更新时间">
-              <template #default="{ row }">{{ fmtDateTime(row.updated_at) }}</template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-      </el-col>
-    </el-row>
+    <QuickAddDialog v-model:visible="quickVisible" @saved="load" />
   </div>
 </template>
 
 <style scoped>
 .quick-card {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   border: none;
   background: linear-gradient(120deg, #ffffff 0%, #f3f4ff 100%);
 }
 .quick-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
-.quick-label {
-  font-size: 13px;
-  color: #8b5cf6;
-  margin-right: 4px;
+.quick-add-btn {
+  font-size: 15px;
   font-weight: 600;
 }
+.quick-hint {
+  color: #9ca3af;
+  font-size: 13px;
+}
+.today-chip {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid #eef1f7;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.today-chip:hover {
+  border-color: var(--el-color-primary-light-5);
+}
+.today-num {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--el-color-primary);
+}
+.today-label {
+  font-size: 12px;
+  color: #9ca3af;
+}
+.todo-card {
+  margin-bottom: 4px;
+}
+.todo-card :deep(.el-card__header) {
+  font-weight: 600;
+  color: #1f2937;
+}
+.todo-empty {
+  color: #9ca3af;
+  font-size: 13px;
+}
 .section-title {
-  margin: 0 0 12px;
+  margin: 18px 0 12px;
   font-size: 15px;
   color: #1f2937;
   font-weight: 600;

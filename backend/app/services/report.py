@@ -37,13 +37,13 @@ def summarize(
 
     meetings = (
         db.query(MeetingRecord)
-        .filter(MeetingRecord.created_at >= s_begin, MeetingRecord.created_at <= s_end)
+        .filter(MeetingRecord.is_deleted.is_(False), MeetingRecord.created_at >= s_begin, MeetingRecord.created_at <= s_end)
         .order_by(MeetingRecord.created_at.desc())
         .all()
     )
     maintenance = (
         db.query(MaintenanceRecord)
-        .filter(MaintenanceRecord.created_at >= s_begin, MaintenanceRecord.created_at <= s_end)
+        .filter(MaintenanceRecord.is_deleted.is_(False), MaintenanceRecord.created_at >= s_begin, MaintenanceRecord.created_at <= s_end)
         .order_by(MaintenanceRecord.created_at.desc())
         .all()
     )

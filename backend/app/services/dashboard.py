@@ -1,4 +1,6 @@
 """Dashboard summary service (manual 8.5.5, 10.4)."""
+from datetime import date, datetime
+
 from sqlalchemy import func, case
 from sqlalchemy.orm import Session
 
@@ -11,6 +13,8 @@ from app.schemas.dashboard import DashboardSummary
 
 
 def get_summary(db: Session) -> DashboardSummary:
+    today0 = datetime.combine(date.today(), datetime.min.time())
+
     meeting_total = db.query(func.count(MeetingRecord.id)).filter(
         MeetingRecord.is_deleted.is_(False)).scalar() or 0
     meeting_pending = db.query(func.count(MeetingRecord.id)).filter(
@@ -35,6 +39,34 @@ def get_summary(db: Session) -> DashboardSummary:
         maint_by_cat[cat or "未分类"] = {"total": total, "pending": int(pending)}
     user_total = db.query(func.count(User.id)).scalar() or 0
 
+    # 今日新增
+    today_maintenance = db.query(func.count(MaintenanceRecord.id)).filter(
+        MaintenanceRecord.is_deleted.is_(False), MaintenanceRecord.created_at >= today0).scalar() or 0
+    today_meetings = db.query(func.count(MeetingRecord.id)).filter(
+        MeetingRecord.is_deleted.is_(False), MeetingRecord.created_at >= today0).scalar() or 0
+    today_assets = db.query(func.count(NetworkAsset.id)).filter(
+        NetworkAsset.created_at >= today0).scalar() or 0
+    today_batches = db.query(func.count(AccountBatch.id)).filter(
+        AccountBatch.is_deleted.is_(False), AccountBatch.created_at >= today0).scalar() or 0
+
+    # 待办清单（维护：待处理/处理中；会议：待调试）
+    todo_maintenance = [
+        {"id": m.id, "record_no": m.record_no, "category": m.category,
+         "requester": m.requester, "status": m.status, "location": m.location}
+        for m in db.query(MaintenanceRecord).filter(
+            MaintenanceRecord.is_deleted.is_(False),
+            MaintenanceRecord.status.in_(["pending", "processing"]))
+        .order_by(MaintenanceRecord.created_at.asc()).limit(20).all()
+    ]
+    todo_meetings = [
+        {"id": m.id, "record_no": m.record_no, "meeting_name": m.meeting_name,
+         "status": m.status,
+         "meeting_time": m.meeting_time.isoformat() if m.meeting_time else None}
+        for m in db.query(MeetingRecord).filter(
+            MeetingRecord.is_deleted.is_(False), MeetingRecord.status == "pending")
+        .order_by(MeetingRecord.meeting_time.asc()).limit(20).all()
+    ]
+
     recent_maintenance = [
         {"id": m.id, "record_no": m.record_no, "category": m.category,
          "status": m.status, "requester": m.requester}
@@ -54,5 +86,8 @@ def get_summary(db: Session) -> DashboardSummary:
         maintenance_total=maint_total, maintenance_pending=maint_pending,
         maintenance_by_category=maint_by_cat,
         user_total=user_total,
+        today_maintenance=today_maintenance, today_meetings=today_meetings,
+        today_assets=today_assets, today_batches=today_batches,
+        todo_maintenance=todo_maintenance, todo_meetings=todo_meetings,
         recent_maintenance=recent_maintenance, recent_meetings=recent_meetings,
     )

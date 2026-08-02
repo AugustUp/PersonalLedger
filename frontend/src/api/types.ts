@@ -168,6 +168,12 @@ export interface DashboardSummary {
   maintenance_pending: number
   maintenance_by_category: Record<string, { total: number; pending: number }>
   user_total: number
+  today_maintenance: number
+  today_meetings: number
+  today_assets: number
+  today_batches: number
+  todo_maintenance: any[]
+  todo_meetings: any[]
   recent_maintenance: any[]
   recent_meetings: any[]
 }
