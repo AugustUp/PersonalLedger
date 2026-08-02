@@ -1,20 +1,22 @@
 /* ============================================================
-   Global theme overrides (Element Plus light professional theme)
+   Ops Ledger — Modern UI theme (indigo, light, glassy touches)
    ============================================================ */
 :root {
-  /* Primary: deep professional blue */
-  --el-color-primary: #2563eb;
-  --el-color-primary-light-3: #5b85f0;
-  --el-color-primary-light-5: #92b1f5;
-  --el-color-primary-light-7: #c9d8fa;
-  --el-color-primary-light-8: #dce7fc;
-  --el-color-primary-light-9: #eef3fe;
-  --el-color-primary-dark-2: #1e4fbc;
+  /* Primary: modern indigo */
+  --el-color-primary: #4f46e5;
+  --el-color-primary-light-3: #7d74ea;
+  --el-color-primary-light-5: #a5a0f1;
+  --el-color-primary-light-7: #ccc9f7;
+  --el-color-primary-light-8: #dddbfa;
+  --el-color-primary-light-9: #eeeefc;
+  --el-color-primary-dark-2: #3f38b7;
 
-  --el-border-radius-base: 6px;
-  --el-border-radius-small: 4px;
-  --el-border-radius-round: 20px;
-  --el-box-shadow-light: 0 2px 12px 0 rgba(31, 45, 61, 0.08);
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+  --el-border-radius-round: 999px;
+
+  --el-box-shadow-light: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.08);
+  --el-box-shadow: 0 4px 16px rgba(16, 24, 40, 0.08);
 }
 
 html,
@@ -26,50 +28,131 @@ body,
 }
 
 body {
-  font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  color: #303133;
-  background: #f5f7fa;
+  font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: #1f2937;
+  background: #f4f6fb;
   -webkit-font-smoothing: antialiased;
+  font-size: 14px;
 }
 
-/* Slim, subtle scrollbars */
+/* Slim scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #c6ccd4;
+  background: #cbd2e0;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8b0ba;
+  background: #a8b1c5;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* Route transition (used by MainLayout router-view) */
+/* Route transition */
 .fade-slide-enter-active,
 .fade-slide-leave-active {
   transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
+    opacity 0.22s ease,
+    transform 0.22s ease;
 }
 .fade-slide-enter-from {
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(10px);
 }
 .fade-slide-leave-to {
   opacity: 0;
   transform: translateY(-4px);
 }
 
-/* Global card consistency */
+/* ---------- Cards ---------- */
 .el-card {
+  border-radius: 12px;
+  border: 1px solid #eef1f7;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+}
+.el-card.is-hover-shadow:hover {
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.12);
+  transform: translateY(-2px);
+  transition: all 0.2s ease;
+}
+.el-card__header {
+  border-bottom: 1px solid #f1f3f9;
+}
+
+/* ---------- Buttons ---------- */
+.el-button {
+  border-radius: 8px;
+  font-weight: 500;
+}
+.el-button--primary {
+  background-image: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  border: none;
+}
+.el-button--primary:hover {
+  background-image: linear-gradient(135deg, #7177f3 0%, #5a52ea 100%);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+}
+.el-button.is-text,
+.el-button.is-link {
+  border-radius: 6px;
+}
+
+/* ---------- Inputs / selects ---------- */
+.el-input__wrapper,
+.el-textarea__inner {
+  border-radius: 8px;
+}
+.el-input__wrapper {
+  box-shadow: 0 0 0 1px #e3e8f1 inset;
+}
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+}
+.el-select__wrapper {
   border-radius: 8px;
 }
 
-/* Slightly softer page background for main content cards */
-.app-main .el-card {
-  background: #fff;
+/* ---------- Table: borderless, modern ---------- */
+.el-table {
+  --el-table-border-color: #f0f2f7;
+  --el-table-header-bg-color: #f8f9fc;
+  --el-table-row-hover-bg-color: #f4f5fd;
+  border-radius: 10px;
+}
+.el-table th.el-table__cell {
+  font-weight: 600;
+  color: #4b5563;
+}
+.el-table .el-table__cell {
+  padding: 9px 0;
+}
+
+/* ---------- Tags / pills ---------- */
+.el-tag {
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+/* ---------- Pagination / tabs ---------- */
+.el-pagination.is-background .el-pager li {
+  border-radius: 8px;
+}
+.el-tabs__item {
+  font-weight: 500;
+}
+
+/* ---------- Dialog ---------- */
+.el-dialog {
+  border-radius: 14px;
+}
+.el-message-box {
+  border-radius: 14px;
+}
+
+/* ---------- Empty / misc ---------- */
+.el-empty__description p {
+  color: #9ca3af;
 }

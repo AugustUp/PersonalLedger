@@ -12,10 +12,10 @@ const loading = ref(false)
 const data = ref<DashboardSummary | null>(null)
 
 const moduleCards = ref([
-  { key: 'meetings', titleKey: 'meetings', icon: 'Calendar', color: '#409eff', total: 0, pending: 0, to: '/meetings' },
-  { key: 'network', titleKey: 'network_assets', icon: 'Connection', color: '#67c23a', total: 0, pending: 0, to: '/network-assets' },
-  { key: 'account', titleKey: 'account_batches', icon: 'Files', color: '#e6a23c', total: 0, pending: 0, to: '/account-batches' },
-  { key: 'maintenance', titleKey: 'maintenance', icon: 'Tools', color: '#f56c6c', total: 0, pending: 0, to: '/maintenance' },
+  { key: 'meetings', titleKey: 'meetings', icon: 'Calendar', color: 'linear-gradient(135deg,#6366f1,#8b5cf6)', total: 0, pending: 0, to: '/meetings' },
+  { key: 'network', titleKey: 'network_assets', icon: 'Connection', color: 'linear-gradient(135deg,#10b981,#34d399)', total: 0, pending: 0, to: '/network-assets' },
+  { key: 'account', titleKey: 'account_batches', icon: 'Files', color: 'linear-gradient(135deg,#f59e0b,#fbbf24)', total: 0, pending: 0, to: '/account-batches' },
+  { key: 'maintenance', titleKey: 'maintenance', icon: 'Tools', color: 'linear-gradient(135deg,#ef4444,#f87171)', total: 0, pending: 0, to: '/maintenance' },
 ])
 
 const catGroups = computed(() => config.categoryGroups())
@@ -141,6 +141,8 @@ onMounted(() => {
 <style scoped>
 .quick-card {
   margin-bottom: 16px;
+  border: none;
+  background: linear-gradient(120deg, #ffffff 0%, #f3f4ff 100%);
 }
 .quick-bar {
   display: flex;
@@ -150,17 +152,24 @@ onMounted(() => {
 }
 .quick-label {
   font-size: 13px;
-  color: #909399;
+  color: #8b5cf6;
   margin-right: 4px;
+  font-weight: 600;
 }
 .section-title {
   margin: 0 0 12px;
   font-size: 15px;
-  color: #303133;
+  color: #1f2937;
+  font-weight: 600;
 }
 .stat-card {
   cursor: pointer;
   margin-bottom: 4px;
+  transition: all 0.2s ease;
+}
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 26px rgba(79, 70, 229, 0.14);
 }
 .stat-card :deep(.el-card__body) {
   display: flex;
@@ -168,26 +177,28 @@ onMounted(() => {
   gap: 14px;
 }
 .stat-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 10px;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 24px;
+  box-shadow: 0 4px 10px rgba(16, 24, 40, 0.16);
 }
 .stat-title {
-  color: #606266;
+  color: #6b7280;
   font-size: 13px;
 }
 .stat-total {
   font-size: 26px;
   font-weight: 700;
   line-height: 1.2;
+  color: #111827;
 }
 .stat-sub {
-  color: #909399;
+  color: #9ca3af;
   font-size: 12px;
 }
 .domain-card {
@@ -195,15 +206,16 @@ onMounted(() => {
 }
 .card-header {
   font-weight: 600;
-  color: #303133;
+  color: #1f2937;
 }
 .cat-group {
   margin-bottom: 14px;
 }
 .cat-group-title {
   font-size: 13px;
-  color: #909399;
+  color: #8b5cf6;
   margin-bottom: 8px;
+  font-weight: 600;
 }
 .cat-grid {
   display: grid;
@@ -211,21 +223,22 @@ onMounted(() => {
   gap: 12px;
 }
 .cat-tile {
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  padding: 12px;
+  border: 1px solid #eef1f7;
+  border-radius: 12px;
+  padding: 14px;
   cursor: pointer;
-  background: #fafafa;
-  transition: all 0.15s;
+  background: #fff;
+  transition: all 0.18s ease;
 }
 .cat-tile:hover {
-  border-color: #409eff;
-  background: #ecf5ff;
-  transform: translateY(-2px);
+  border-color: #c7c3f9;
+  background: linear-gradient(135deg, #f4f3ff 0%, #ffffff 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.12);
 }
 .cat-name {
   font-weight: 600;
-  color: #303133;
+  color: #1f2937;
   margin-bottom: 6px;
 }
 .cat-stat {
@@ -233,13 +246,13 @@ onMounted(() => {
   font-weight: 700;
 }
 .cat-pending {
-  color: #f56c6c;
+  color: #ef4444;
 }
 .cat-total {
-  color: #606266;
+  color: #6b7280;
 }
 .cat-foot {
   font-size: 12px;
-  color: #909399;
+  color: #9ca3af;
 }
 </style>

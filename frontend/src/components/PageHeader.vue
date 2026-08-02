@@ -39,26 +39,27 @@ defineProps<{
 }
 .ph-icon {
   flex: none;
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  background: var(--el-color-primary-light-9);
-  color: var(--el-color-primary);
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 22px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 .ph-title {
   font-size: 18px;
-  font-weight: 600;
-  color: #1f2d3d;
+  font-weight: 700;
+  color: #111827;
   line-height: 1.3;
 }
 .ph-desc {
   margin-top: 2px;
   font-size: 12px;
-  color: #909399;
+  color: #9ca3af;
   line-height: 1.4;
 }
 .ph-actions {

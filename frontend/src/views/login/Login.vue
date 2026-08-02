@@ -77,34 +77,38 @@ async function onSubmit() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1f2d3d 0%, #25406b 55%, #2563eb 130%);
+  background: linear-gradient(135deg, #111827 0%, #312e81 55%, #4f46e5 120%);
   overflow: hidden;
 }
 .login-bg {
   position: absolute;
   border-radius: 50%;
   filter: blur(2px);
-  opacity: 0.35;
+  opacity: 0.4;
   pointer-events: none;
 }
 .decor-1 {
-  width: 420px;
-  height: 420px;
-  top: -120px;
-  left: -80px;
-  background: radial-gradient(circle at 30% 30%, #4f8df9, transparent 70%);
+  width: 460px;
+  height: 460px;
+  top: -140px;
+  left: -100px;
+  background: radial-gradient(circle at 30% 30%, #818cf8, transparent 70%);
 }
 .decor-2 {
-  width: 520px;
-  height: 520px;
-  bottom: -180px;
-  right: -120px;
-  background: radial-gradient(circle at 60% 60%, #38bdf8, transparent 70%);
+  width: 560px;
+  height: 560px;
+  bottom: -200px;
+  right: -140px;
+  background: radial-gradient(circle at 60% 60%, #c084fc, transparent 70%);
 }
 .login-card {
-  width: 380px;
-  border-radius: 14px;
+  width: 400px;
+  border-radius: 18px;
   z-index: 1;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
 }
 .login-head {
   text-align: center;
