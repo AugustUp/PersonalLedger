@@ -173,7 +173,7 @@ onMounted(load)
         </el-table-column>
         <template #empty>
           <EmptyHint text="暂无会议调试记录">
-            <el-button v-if="total === 0" size="small" type="primary" plain @click="router.push('/meetings/new')">
+            <el-button v-if="total === 0" type="primary" @click="router.push('/meetings/new')">
               新增第一条记录
             </el-button>
           </EmptyHint>

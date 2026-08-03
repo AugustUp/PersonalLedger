@@ -144,7 +144,7 @@ onMounted(load)
         </el-table-column>
         <template #empty>
           <EmptyHint text="暂无账号批次">
-            <el-button v-if="total === 0" size="small" type="primary" plain @click="router.push('/account-batches/new')">
+            <el-button v-if="total === 0" type="primary" @click="router.push('/account-batches/new')">
               新增第一个批次
             </el-button>
           </EmptyHint>

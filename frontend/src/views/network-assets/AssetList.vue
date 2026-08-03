@@ -165,7 +165,7 @@ onMounted(async () => {
         </el-table-column>
         <template #empty>
           <EmptyHint text="暂无 IP/MAC 记录">
-            <el-button v-if="total === 0" size="small" type="primary" plain @click="router.push('/network-assets/new')">
+            <el-button v-if="total === 0" type="primary" @click="router.push('/network-assets/new')">
               新增第一条记录
             </el-button>
           </EmptyHint>

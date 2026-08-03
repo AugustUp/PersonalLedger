@@ -297,7 +297,7 @@ watch(
         </el-table-column>
         <template #empty>
           <EmptyHint text="暂无维护记录">
-            <el-button v-if="total === 0" size="small" type="primary" plain @click="router.push(`/maintenance/new${groupQuery}`)">
+            <el-button v-if="total === 0" type="primary" @click="router.push(`/maintenance/new${groupQuery}`)">
               新增第一条记录
             </el-button>
           </EmptyHint>

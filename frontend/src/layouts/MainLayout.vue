@@ -180,7 +180,7 @@ onMounted(() => {
             <span class="user-name">{{ user.realName || user.me?.username }}</span>
             <el-tag size="small" type="info" effect="plain">{{ roleLabel[user.role] || user.role }}</el-tag>
           </div>
-          <el-button text type="primary" @click="onLogout">退出登录</el-button>
+          <el-button size="small" plain type="primary" @click="onLogout">退出登录</el-button>
         </div>
       </el-header>
       <el-main class="app-main">
