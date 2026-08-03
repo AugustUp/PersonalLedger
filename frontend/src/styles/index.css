@@ -99,6 +99,14 @@ body {
 .el-button.is-link {
   border-radius: 6px;
 }
+/* 表格/操作区的蓝色文字按钮统一加粗加深，保证可读性 */
+.el-button.is-link {
+  font-weight: 600;
+  color: #4338ca;
+}
+.el-button.is-link:hover {
+  color: #4f46e5;
+}
 
 /* ---------- Inputs / selects ---------- */
 .el-input__wrapper,
