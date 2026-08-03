@@ -31,7 +31,8 @@ body {
   font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   color: #1f2937;
   background: #f4f6fb;
-  -webkit-font-smoothing: antialiased;
+  /* 不要用 antialiased：Windows 上灰度抗锯齿会让中文小字笔画发虚、像"显示不全"。
+     交给浏览器默认 subpixel 渲染，中文更饱满。 */
   font-size: 14px;
 }
 
@@ -86,14 +87,22 @@ body {
 .el-button {
   border-radius: 8px;
   font-weight: 500;
+  white-space: nowrap; /* 防止按钮文字被压缩/折行 */
+}
+.el-button > span {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.4; /* 保证中文笔画垂直方向不被裁剪 */
 }
 .el-button--primary {
   background-image: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   border: none;
+  color: #fff;
 }
 .el-button--primary:hover {
   background-image: linear-gradient(135deg, #7177f3 0%, #5a52ea 100%);
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+  color: #fff;
 }
 .el-button.is-text,
 .el-button.is-link {
@@ -106,6 +115,11 @@ body {
 }
 .el-button.is-link:hover {
   color: #4f46e5;
+}
+/* 小按钮字号 12px -> 13px，笔画更实 */
+.el-button--small {
+  font-size: 13px;
+  padding: 6px 12px;
 }
 
 /* ---------- Inputs / selects ---------- */
